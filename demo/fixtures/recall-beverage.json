@@ -1,0 +1,37 @@
+{
+  "dataset": "synthetic",
+  "subject": "Avery",
+  "query": "What should I drink this afternoon?",
+  "memories": [
+    {
+      "id": "demo:beverage:current",
+      "demo_synthetic": true,
+      "title": "Recent beverage preference",
+      "excerpt": "Avery currently prefers lightly sweet milk tea.",
+      "recall_tier": "T0",
+      "recall_role": "factual",
+      "evidence_type": "direct_fact",
+      "recall_path": ["query", "direct match", "Recent beverage preference"],
+      "source_channels": ["formal", "vector"],
+      "score": 16.2,
+      "expandable": true,
+      "content_available": true,
+      "detail_level": "summary"
+    },
+    {
+      "id": "demo:taste:sweetness",
+      "demo_synthetic": true,
+      "title": "Sweetness preference",
+      "excerpt": "Avery usually prefers lower sweetness than before.",
+      "recall_tier": "T1",
+      "recall_role": "supporting",
+      "evidence_type": "related_context",
+      "recall_path": ["query", "soft anchor / context envelope", "Sweetness preference"],
+      "source_channels": ["context-envelope", "vector"],
+      "score": 10.4,
+      "expandable": true,
+      "content_available": true,
+      "detail_level": "cue"
+    }
+  ]
+}

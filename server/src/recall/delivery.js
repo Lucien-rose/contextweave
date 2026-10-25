@@ -1,0 +1,115 @@
+import { updateCharacterCount } from "./response-budget.js";
+import { randomUUID } from "node:crypto";
+import { getMemory } from "../database.js";
+import { recallMemoriesWithTrace, progressiveRecall } from "./sqlite.js";
+import { buildHomecomingBundle, memoriesForDate } from "../retrieval.js";
+
+// Keep legacy clients working. Confirmed delivery is an explicit host contract:
+// the host acknowledges only the items that reached the model's context.
+export function recallForDelivery(db, input = {}) {
+  const { deliveryMode = "immediate", ...recallInput } = input;
+  if (!["immediate", "confirmed"].includes(deliveryMode)) throw new TypeError("Invalid delivery mode");
+  const recalled = recallMemoriesWithTrace(db, {
+    ...recallInput,
+    recordRecall: deliveryMode === "immediate",
+  });
+  return attachDelivery(db, recalled, [...recalled.memories, ...(recalled.background_memories || [])], deliveryMode);
+}
+
+export async function recallForDeliveryWithVector(db, input = {}) {
+  const { deliveryMode = "immediate", vectorMode = null, ...recallInput } = input;
+  if (!["immediate", "confirmed"].includes(deliveryMode)) throw new TypeError("Invalid delivery mode");
+  const recalled = await progressiveRecall(db, {
+    ...recallInput,
+    vectorMode,
+    recordRecall: deliveryMode === "immediate",
+    syncIndex: true,
+  });
+  return attachDelivery(db, recalled, [...recalled.memories, ...(recalled.background_memories || [])], deliveryMode);
+}
+
+export function bootstrapForDelivery(db, { deliveryMode = "immediate", ...input } = {}) {
+  validateDeliveryMode(deliveryMode);
+  const bundle = buildHomecomingBundle(db, { ...input, recordRecall: deliveryMode === "immediate" });
+  const items = bundle.schema_version === 3 ? [...bundle.continuity_seed, ...bundle.observances]
+    : [...bundle.deep_reads.general, ...bundle.deep_reads.intimate,
+      ...bundle.working_summaries, ...bundle.agreement_manifest, ...bundle.observances];
+  return attachDelivery(db, bundle, items, deliveryMode);
+}
+
+export function todayForDelivery(db, { deliveryMode = "immediate", ...input } = {}) {
+  validateDeliveryMode(deliveryMode);
+  const memories = memoriesForDate(db, { ...input, recordRecall: deliveryMode === "immediate" });
+  return attachDelivery(db, { memories }, memories, deliveryMode);
+}
+
+function validateDeliveryMode(mode) {
+  if (!["immediate", "confirmed"].includes(mode)) throw new TypeError("Invalid delivery mode");
+}
+
+function attachDelivery(db, payload, memories, deliveryMode) {
+  if (deliveryMode === "immediate" || !memories.length) return payload;
+  const id = `delivery:${randomUUID()}`;
+  const selected = [...new Map(memories.map((memory) => [memory.id,
+    { id: memory.id, hash: memory.content_hash }])).values()];
+  db.prepare(`INSERT INTO recall_deliveries(id, selected_json, created_at) VALUES (?, ?, ?)`)
+    .run(id, JSON.stringify(selected), new Date().toISOString());
+  const response = { ...payload, delivery: { receipt_id: id, status: "prepared" } };
+  if (response.budgets) updateCharacterCount(response);
+  return response;
+}
+
+export function acknowledgeRecallDelivery(db, { receiptId, memoryIds } = {}) {
+  if (typeof receiptId !== "string" || !receiptId.startsWith("delivery:")) {
+    throw new TypeError("Valid receipt_id is required");
+  }
+  if (!Array.isArray(memoryIds) || !memoryIds.length || memoryIds.length > 64
+    || memoryIds.some((id) => typeof id !== "string" || !id.trim())) {
+    throw new TypeError("memory_ids must contain 1 to 64 delivered IDs");
+  }
+  const ids = [...new Set(memoryIds)].sort();
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const receipt = db.prepare("SELECT * FROM recall_deliveries WHERE id = ?").get(receiptId);
+    if (!receipt) throw Object.assign(new TypeError("Delivery receipt is no longer available"), { status: 410 });
+    const selected = JSON.parse(receipt.selected_json);
+    if (ids.some((id) => !selected.some((item) => item.id === id))) {
+      throw new TypeError("Delivered IDs must belong to this receipt");
+    }
+    if (receipt.delivered_at) {
+      if (JSON.stringify(ids) !== receipt.delivered_ids_json) {
+        throw new TypeError("Delivery was already acknowledged with different IDs");
+      }
+      db.exec("COMMIT");
+      return { status: "delivered", duplicate: true, recorded_count: 0 };
+    }
+    // A revised body must not inherit the read count of the previous body.
+    const unchanged = ids.filter((id) => {
+      const memory = getMemory(db, id);
+      return memory && memory.content_hash === selected.find((item) => item.id === id).hash;
+    });
+    const deliveredAt = new Date().toISOString();
+    const mark = db.prepare(`UPDATE memories SET last_recalled_at = ?, recall_count = recall_count + 1 WHERE id = ?`);
+    for (const id of unchanged) mark.run(deliveredAt, id);
+    db.prepare(`UPDATE recall_deliveries SET delivered_ids_json = ?, delivered_at = ? WHERE id = ?`)
+      .run(JSON.stringify(ids), deliveredAt, receiptId);
+    db.exec("COMMIT");
+    return { status: "delivered", duplicate: false, recorded_count: unchanged.length };
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
+// Explicit maintenance only. Pending receipts have a longer retry window;
+// no memory bodies or read counts are changed by this operation.
+export function pruneRecallDeliveries(db, { at = new Date(), apply = false } = {}) {
+  const cutoff = (days) => new Date(at.getTime() - days * 86_400_000).toISOString();
+  const predicate = `(delivered_at IS NOT NULL AND delivered_at < ?)
+    OR (delivered_at IS NULL AND created_at < ?)`;
+  const cutoffs = [cutoff(30), cutoff(90)];
+  const count = Number(db.prepare(`SELECT COUNT(*) AS count FROM recall_deliveries WHERE ${predicate}`).get(...cutoffs).count);
+  const removed = apply ? Number(db.prepare(`DELETE FROM recall_deliveries WHERE ${predicate}`).run(...cutoffs).changes) : 0;
+  return { mode: apply ? "applied" : "dry-run", eligible: count, removed,
+    delivered_retention_days: 30, pending_retention_days: 90 };
+}

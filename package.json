@@ -1,0 +1,47 @@
+{
+  "name": "contextweave",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Self-hosted memory backend with SQLite, MCP, portraits and optional vector recall.",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "exports": {
+    ".": "./server/src/recall/progressive.js",
+    "./pipeline": "./server/src/recall/pipeline.js",
+    "./portrait": "./server/src/portrait/core.js",
+    "./portrait/schema": "./server/src/portrait/schema.js",
+    "./organizer": "./server/src/portrait/organizer.js",
+    "./portrait/worker": "./server/src/portrait/worker.js",
+    "./portrait/queue": "./server/src/portrait/queue.js",
+    "./portrait/backfill": "./server/src/portrait/backfill.js",
+    "./portrait/deletion": "./server/src/portrait/deletion.js",
+    "./models": "./server/src/models/service.js",
+    "./vector/deployment": "./server/src/vector/deployment.js",
+    "./health": "./server/src/health/checks.js",
+    "./window": "./server/src/window/store.js",
+    "./window/organizer": "./server/src/window/organizer.js",
+    "./doctor": "./server/src/doctor/batches.js",
+    "./doctor/worker": "./server/src/doctor/worker.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "express": "^5.2.1",
+    "zod": "^4.6.7"
+  },
+  "scripts": {
+    "init": "node scripts/init-backend.js",
+    "start": "node server/src/backend.js --http",
+    "start:stdio": "node server/src/backend.js --stdio",
+    "test": "MOSS_VECTOR_ENV_FILE=/dev/null MOSS_JEV_ENV_FILE=/dev/null MOSS_JEV_API_KEY= node --test server/test/public-*.test.js",
+    "demo": "node scripts/run-public-demo.js",
+    "health:check": "node scripts/health-check.js",
+    "vector:sync": "node scripts/sync-vector-index.js",
+    "vector:migration": "node scripts/vector-migration.js",
+    "architecture:check": "node scripts/check-architecture.js",
+    "boundary:check": "node scripts/check-public.js",
+    "tools:document": "node scripts/document-tools.js"
+  },
+  "license": "Apache-2.0"
+}
