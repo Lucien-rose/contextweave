@@ -8,6 +8,7 @@ Portable memory-package import and a complete bilingual onboarding guide.
 - Imported memories retain supported fields and evidence excerpts, generate audit/Lineage receipts, refresh local search and queue vector work.
 - Existing canonical and deleted IDs are never overwritten or reused. Owner JSON export is a **partial** import source, not a full restore.
 - English and Chinese README now include deployment and post-install import instructions.
+- Added the project architecture artwork and a cross-session demo GIF to the bilingual README.
 
 For full database recovery, continue to use the verified SQLite snapshot restore workflow. Import does not reconstruct historical portraits, source materials, Lineage changes, continuity, tombstones or vector generations.
 
