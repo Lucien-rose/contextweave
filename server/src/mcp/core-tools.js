@@ -231,7 +231,9 @@ export function registerCoreTools(server, { core, continuity }) {
     context_envelope, recall_control, family_policy = "representative", allow_repeat = true,
     allow_repeat_if_stale = false, jev_mode, shadow_mode = "observe", vector_mode = "observe", jev_shadow_mode = "off",
   }) => {
+    let hostStatus = null;
     const diagnostic = await core.recallWithVectorTrace({
+      onRecallStatus: status => { hostStatus = status; },
       query, context, intimacyMode: intimacy_mode, limit, contextBudgetChars: context_budget_chars, includeArchived: include_archived,
       recentlyReadIds: recently_read_ids, recentlyReadHashes: recently_read_hashes,
       recentlyReadFamilies: recently_read_families, familyPolicy: family_policy,
@@ -248,6 +250,7 @@ export function registerCoreTools(server, { core, continuity }) {
       shadow_mode,
       vector_mode,
       final_ids: trace.final_ids,
+      ...(hostStatus ? { recall_status: hostStatus } : {}),
       trace,
     });
   });

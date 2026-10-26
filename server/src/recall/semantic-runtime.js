@@ -21,7 +21,7 @@ export async function runSemanticRecall(db, input, baseline, dependencies = {}) 
   };
   if (!config.available) return deliver(await baseline(input));
   let captured;
-  const prepared = await baseline({ ...input, recordRecall: false, captureOnly: mode === "on",
+  const prepared = await baseline({ ...input, recordRecall: false,
     captureCandidates: value => { captured = value; } });
   if (!captured) return deliver(prepared);
   const runtime = captured.runtime;
@@ -32,6 +32,10 @@ export async function runSemanticRecall(db, input, baseline, dependencies = {}) 
   let decisions = null;
   if (!snapshot.rows.length) {
     Object.assign(status, { jev_status: "no-candidates", fallback_used: false });
+    return deliver(finish(null));
+  }
+  if (mode === "on" && snapshot.coverage.baseline_truncated_count > 0) {
+    Object.assign(status, { jev_status: "snapshot-incomplete", fallback_used: true });
     return deliver(finish(null));
   }
   try {

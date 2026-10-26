@@ -13,7 +13,8 @@ configured model defaults to `on`; an unconfigured installation uses local recal
 Set `off` to retain the previous behavior without model calls.
 
 - `on`: semantic usefulness and priority replace heuristic tail decisions for
-  judged candidates. Uncertain or uncovered candidates keep their local gates.
+  judged candidates. Uncertain indirect candidates are omitted; protected direct
+  matches remain available. Uncovered local candidates retain their local gates.
 - `observe`: compute judgments but keep the local selection.
 - Provider timeout, invalid/incomplete response, unavailable configuration or
   changed candidate snapshot: finish using local rules without repeating a model
@@ -33,7 +34,8 @@ main `memories` array is empty.
 
 `POST /api/gateway/recall` adds a body-free `host_status` object when the semantic
 route is requested. MCP puts the same data in result `_meta.recall_status`, outside
-the text result. A JS host may supply `onRecallStatus(status)`.
+the text result. The body-free `moss_recall_trace` diagnostic also exposes
+`recall_status` for owner validation. A JS host may supply `onRecallStatus(status)`.
 
 Fields include `mode`, `recall_path` (`jev` / `local`), `jev_status`,
 `fallback_used`, and an opaque `incident_id` for provider failures. No provider

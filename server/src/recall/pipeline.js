@@ -125,10 +125,7 @@ export function recallMemoriesWithTrace(repository, {
 
   if (captureOnly) return { memories: [], background_memories: [], trace: { candidates: traceCandidates } };
   markPhase("candidate_scoring");
-  const localFallback = !semanticDecisions || scored.some(entry => {
-    const decision = semanticDecisions.get(entry.memory.id);
-    return !entry.rawDirectEvidence && (!decision || decision.relevance === "uncertain" || decision.context_fit === "uncertain");
-  });
+  const localFallback = !semanticDecisions || scored.some(entry => !semanticDecisions.has(entry.memory.id));
   const contextualTail = localFallback ? applyContextualTail(scored, traceCandidates) : { scored, floor: null };
   scored = contextualTail.scored;
   const contextualRelevanceFloor = contextualTail.floor;

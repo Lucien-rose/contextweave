@@ -15,6 +15,7 @@ import { proposeFamilyGroups } from "../src/family/proposal.js";
 import { discoverRelations } from "../src/relation/discovery.js";
 import { createModelSettingsStore, connectionFingerprint } from "../src/models/settings.js";
 import { jevConfig } from "../src/jev/client.js";
+import { buildJevSnapshot } from "../src/recall/jev-snapshot.js";
 
 function database(t) {
   const directory = mkdtempSync(join(tmpdir(), "cw-upgrade-"));
@@ -56,14 +57,59 @@ test("semantic none is successful; provider failure uses the complete local rout
   const db = database(t);
   writeMemory(db, { id: "demo:rain", title: "Rain shelter", content: "A sheltered place beside the lake." });
   const input = { query: "Where could we stop along the route?", vectorRecall: vector(["demo:rain"]) };
-  const none = await semantic(db, input, async () => ({ decisions: [decision("demo:rain", "irrelevant", "omit")] }));
+  let coverage;
+  const none = await semantic(db, input, async snapshot => {
+    coverage = snapshot.coverage;
+    return { decisions: [decision("demo:rain", "irrelevant", "omit")] };
+  });
   assert.deepEqual(none.result.memories, []);
+  assert.equal(coverage.baseline_selected_count, 1);
+  assert.equal(coverage.baseline_truncated_count, 0);
   assert.equal(none.status.fallback_used, false);
   const fallback = await semantic(db, input, async () => { throw new Error("provider unavailable"); });
   assert.ok(fallback.result.memories.some(item => item.id === "demo:rain"));
   assert.equal(fallback.status.fallback_used, true);
   assert.equal(fallback.status.jev_status, "provider-failed");
   assert.doesNotMatch(JSON.stringify(recallResponse(fallback.result, input)), /provider-failed|incident_id|host_status/);
+});
+
+test("semantic uncertainty omits indirect candidates but preserves direct evidence", async t => {
+  const db = database(t);
+  writeMemory(db, { id: "demo:indirect", title: "Route notebook", content: "A note about a distant route." });
+  writeMemory(db, { id: "demo:direct", title: "Exact anchor", content: "The directly requested note." });
+  const uncertain = id => decision(id, "uncertain", "omit");
+  const indirect = await semantic(db, {
+    query: "What should I learn next?",
+    vectorRecall: vector(["demo:indirect"]),
+  }, async () => ({ decisions: [uncertain("demo:indirect")] }));
+  assert.deepEqual(indirect.result.memories, []);
+  const direct = await semantic(db, { query: "Exact anchor" }, async () => ({ decisions: [uncertain("demo:direct")] }));
+  assert.ok(direct.result.memories.some(item => item.id === "demo:direct"));
+});
+
+test("semantic snapshots judge local return candidates before exploratory candidates", () => {
+  const entries = Array.from({ length: 30 }, (_, index) => {
+    const id = `demo:candidate-${String(index).padStart(2, "0")}`;
+    return { formalAllowed: true, entry: {
+      memory: { id, title: id, content: `Unrelated project note ${index}. `.repeat(45),
+        content_hash: id, version: 1, status: "active", kind: "note", family_key: id, sensitivity: "private" },
+      rawDirectEvidence: false, rawEvidenceScore: 0, contextualEvidenceScore: 0, vectorEvidence: true,
+    } };
+  });
+  const finalIds = entries.slice(-3).map(({ entry }) => entry.memory.id);
+  const snapshot = buildJevSnapshot({ entries, runtime: {
+    queryContext: { rawQuery: "Explain quicksort", facets: null, contextEnvelope: null },
+    envelope: { topics: [], stateCues: [], hypotheses: [] },
+    context: "general", intimacyMode: "off",
+    ftsShadowRanks: new Map(entries.map(({ entry }, index) => [entry.memory.id, index + 1])),
+    observationSituationIds: new Set(), vectorById: new Map(), associationById: new Map(),
+  } }, { trace: { candidates: entries.map(({ entry }) => ({
+    id: entry.memory.id, final: finalIds.includes(entry.memory.id), reason: "relevance-signal",
+  })) } }, { query: "Explain quicksort", context: "general", intimacyMode: "off" });
+  const selected = new Set(snapshot.rows.map(({ entry }) => entry.memory.id));
+  assert.ok(finalIds.every(id => selected.has(id)));
+  assert.equal(snapshot.coverage.baseline_selected_count, 3);
+  assert.equal(snapshot.coverage.baseline_truncated_count, 0);
 });
 
 test("semantic background rescue shares the 1–3 item lane and cannot bypass hard context gates", async t => {

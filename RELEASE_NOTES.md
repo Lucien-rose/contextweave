@@ -4,6 +4,12 @@ Long T0 recall now opens a relevant original-text window. Configured Decision Mo
 can select ordinary recall candidates with local fallback, and soft-gated useful
 material can use the existing bounded background lane. Host-only status explains
 fallback without entering the memory text.
+The semantic snapshot reserves room for every locally selected result before
+exploratory candidates, preventing a valid no-result judgment from leaking
+unreviewed tail candidates. The first local selection is computed without recording
+a delivery, so the active semantic route receives the same priority set used by
+ordinary recall. Uncertain indirect candidates are omitted while direct matches stay
+protected, and the read-only trace reports the active route status.
 
 This release also adds confirmed per-surface cooldown, independent recall/portrait/
 Lineage judgment routes, read-only Atlas relationship leads, and reviewable Lineage

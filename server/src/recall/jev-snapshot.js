@@ -11,17 +11,23 @@ export function buildJevSnapshot({ runtime, entries }, baseline, input) {
   const queues = SOURCES.map((source) => rows.filter((row) => row.sources.includes(source)));
   const selected = new Map();
   let chars = 2;
+  const add = (row) => {
+    if (!row || selected.has(row.candidate.candidate_id) || selected.size >= 24) return;
+    const size = JSON.stringify(row.candidate).length + (selected.size ? 1 : 0);
+    if (chars + size > 12000) return;
+    selected.set(row.candidate.candidate_id, row);
+    chars += size;
+  };
+  for (const row of rows.filter(({ baselineSelected }) => baselineSelected)) add(row);
   for (let position = 0; position < rows.length && selected.size < 24; position += 1) {
     for (const queue of queues) {
       const row = queue[position];
-      if (!row || selected.has(row.candidate.candidate_id)) continue;
-      const size = JSON.stringify(row.candidate).length + (selected.size ? 1 : 0);
-      if (chars + size > 12000 || selected.size >= 24) continue;
-      selected.set(row.candidate.candidate_id, row);
-      chars += size;
+      add(row);
     }
   }
   const candidates = [...selected.values()].map((row) => row.candidate);
+  const baselineSelectedCount = rows.filter(({ baselineSelected }) => baselineSelected).length;
+  const baselineCoveredCount = [...selected.values()].filter(({ baselineSelected }) => baselineSelected).length;
   const payload = { schema_version: "jev-candidates-v1", query: input.query,
     query_representation: runtime.queryContext.facets || runtime.queryContext.contextEnvelope || null,
     context: input.context || "general", intimacy_mode: input.intimacyMode || "off", candidates };
@@ -30,6 +36,9 @@ export function buildJevSnapshot({ runtime, entries }, baseline, input) {
     coverage: { eligible_count: rows.length, selected_count: candidates.length,
       truncated_count: rows.length - candidates.length, selected_chars: chars,
       max_items: 24, char_budget: 12000,
+      baseline_selected_count: baselineSelectedCount,
+      baseline_covered_count: baselineCoveredCount,
+      baseline_truncated_count: baselineSelectedCount - baselineCoveredCount,
       source_counts: Object.fromEntries(SOURCES.map((source) => [source,
         [...selected.values()].filter((row) => row.sources.includes(source)).length])),
       semantic_guard_observed: Boolean(runtime.observationGuardReason) } };
