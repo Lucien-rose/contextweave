@@ -100,3 +100,14 @@ test("invalid calendar dates are rejected during preview", () => fixture(({ db }
   assert.equal(plan.invalid, 1);
   assert.equal(plan.new, 0);
 }));
+
+test("different IDs with matching content require review rather than being silently discarded", () => fixture(({ db }) => {
+  const pkg = { memories: [
+    { id: "event:a", title: "Event", content: "Same words.", event_date: "2026-10-26" },
+    { id: "event:b", title: "Event", content: "Same words.", event_date: "2026-10-26" },
+  ] };
+  const preview = previewMemoryPackage(db, pkg);
+  assert.equal(preview.new, 1);
+  assert.equal(preview.conflicts, 1);
+  assert.match(preview.issues[0].reason, /Possible duplicate/);
+}));
