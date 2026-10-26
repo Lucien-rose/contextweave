@@ -18,6 +18,10 @@ ContextWeave 是面向长期运行 AI Agent 的自托管记忆后端，帮助它
 
 它不把记忆简单处理成一堆静态文本块，而是保存**能够演化、能够追溯来源、能够选择性召回的记录**。权威存储与可选检索索引彼此分离，让 Agent 可以回到相关原文，而不必每次都把完整聊天历史重新塞进 Prompt。
 
+<p align="center">
+  <img src="assets/contextweave-demo.gif" alt="ContextWeave 跨会话记忆演示" width="100%">
+</p>
+
 ContextWeave 是后端，不是完整的聊天前端。接入方负责决定写入哪些内容、何时召回，以及如何放置返回的上下文。
 
 ## 为什么需要 ContextWeave？
@@ -53,25 +57,9 @@ ContextWeave 围绕四个原则设计：
 
 ## 架构
 
-```text
-                        Host / AI Agent
-                              |
-                         MCP / HTTP
-                              |
-                     +--------v--------+
-                     |   ContextWeave  |
-                     |                 |
-                     | Recall / Lineage|
-                     | Portrait / Atlas|
-                     | Capsule / Health|
-                     +-----+-----+-----+
-                           |     |
-                       权威源    派生索引
-                           |     |
-                        SQLite  Qdrant
-                                  |
-                               Embedding
-```
+<p align="center">
+  <img src="assets/contextweave-architecture.jpg" alt="ContextWeave 总架构" width="100%">
+</p>
 
 **SQLite 是权威源。** Qdrant 与 Embedding 属于可选、可重建的派生检索设施。对话输入、会话状态、Prompt 拼装、上下文放置和前端表现仍由宿主负责。
 
