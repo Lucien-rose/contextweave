@@ -19,7 +19,7 @@ The API is single-owner; a multi-user host must isolate databases/credentials it
 | Health | `GET /api/health/{status,runs}`, `POST /api/health/run` | `VECTOR_AND_HEALTH.md` |
 | Vector migration | `/api/vector/migration/*` | `VECTOR_AND_HEALTH.md` |
 | Atlas/entities/relations | `/api/arcs`, `/api/entities`, `/api/relations` | Respective domain `contract.js` files |
-| Export | `GET /api/export` | Owner JSON export; use snapshot CLI for restore |
+| Local import | CLI: `npm run memory:import -- FILE.json --db DATABASE` | `MEMORY_IMPORT.md`; no remote upload endpoint |\n| Export | `GET /api/export` | Owner JSON export; use snapshot CLI for restore |
 
 Method and payload details live in the linked contract modules rather than a second
 handwritten schema. Inspect MCP `tools/list` for the exact current tool schema.
