@@ -41,7 +41,8 @@
     "vector:migration": "node scripts/vector-migration.js",
     "architecture:check": "node scripts/check-architecture.js",
     "boundary:check": "node scripts/check-public.js",
-    "tools:document": "node scripts/document-tools.js"
+    "tools:document": "node scripts/document-tools.js",
+    "memory:import": "node scripts/import-memory-package.js"
   },
   "license": "Apache-2.0"
 }
