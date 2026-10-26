@@ -36,7 +36,7 @@ export async function progressiveRecall(repository, {
   const seedStart = performance.now();
   const seedPass = recallMemoriesWithTrace(repository, {
     ...input, preparedQuery, vectorRecall, allowedMemoryIds,
-    limit: Math.min(12, Math.max(Number(input.limit) || 5, 8)), recordRecall: false, captureCandidates: null,
+    limit: Math.min(12, Math.max(Number(input.limit) || 5, 8)), recordRecall: false, captureOnly: false, captureCandidates: null,
   });
   phases.seed_pipeline = performance.now() - seedStart;
   const seedIds = associationSeedIds(seedPass.memories);

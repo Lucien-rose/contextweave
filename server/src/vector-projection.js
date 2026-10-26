@@ -16,12 +16,16 @@ export function memoryVectorDocuments(memory) {
   if (prefix) docs.push({ chunk_index: 0, chunk_kind: "metadata", text: prefix });
   if (!body) return docs;
   const chunks = chunkText(body);
+  const bodyOffset = String(memory.content).indexOf(body);
   const bodyPrefix = prefix ? `${prefix}\n` : "";
   for (let index = 0; index < chunks.length; index += 1) {
+    const text = chunks[index].text.slice(0, Math.max(0, 7000 - bodyPrefix.length - 9));
     docs.push({
       chunk_index: index + 1,
       chunk_kind: chunkKind,
-      text: `${bodyPrefix}content: ${chunks[index]}`.slice(0, 7000),
+      chunk_start: bodyOffset + chunks[index].start, chunk_end: bodyOffset + chunks[index].start + text.length,
+      content_hash: memory.content_hash,
+      text: `${bodyPrefix}content: ${text}`,
     });
   }
   return docs;
@@ -52,13 +56,18 @@ function chunkText(text) {
   const chunkChars = clampInteger(vectorEnvValue("MOSS_VECTOR_CHUNK_CHARS", DEFAULT_CHUNK_CHARS), 1000, 6000, DEFAULT_CHUNK_CHARS);
   const overlap = clampInteger(vectorEnvValue("MOSS_VECTOR_CHUNK_OVERLAP", DEFAULT_CHUNK_OVERLAP), 0, Math.floor(chunkChars / 3), DEFAULT_CHUNK_OVERLAP);
   const maxChunks = clampInteger(vectorEnvValue("MOSS_VECTOR_MAX_CHUNKS", DEFAULT_MAX_CHUNKS), 1, 32, DEFAULT_MAX_CHUNKS);
-  if (text.length <= chunkChars) return [text];
+  if (text.length <= chunkChars) return [{ text, start: 0, end: text.length }];
   const chunks = [];
   let start = 0;
   while (start < text.length && chunks.length < maxChunks) {
     const hardEnd = Math.min(text.length, start + chunkChars);
     const end = findNaturalBoundary(text, start, hardEnd);
-    chunks.push(text.slice(start, end).trim());
+    const raw = text.slice(start, end);
+    const trimmed = raw.trim();
+    if (trimmed) {
+      const offset = start + raw.indexOf(trimmed);
+      chunks.push({ text: trimmed, start: offset, end: offset + trimmed.length });
+    }
     if (end >= text.length) break;
     start = Math.max(start + 1, end - overlap);
   }

@@ -18,12 +18,12 @@ export function readingChunks(content, { targetChars = 1400, overlap = 320 } = {
         end = floor + last.index + last[0].length;
       }
     }
-    if (/\p{Surrogate}/u.test(text[end - 1] || "")) end -= 1;
+    if (/[\uD800-\uDBFF]/.test(text[end - 1] || "")) end -= 1;
     if (end <= start) end = hardEnd;
     chunks.push({ start, end, content: text.slice(start, end) });
     if (end >= text.length) break;
     start = Math.max(start + 1, end - Math.min(overlap, Math.floor(targetChars / 3)));
-    if (/\p{Surrogate}/u.test(text[start] || "")) start += 1;
+    if (/[\uDC00-\uDFFF]/.test(text[start] || "")) start += 1;
   }
   return chunks;
 }

@@ -27,7 +27,9 @@ try {
   assert.deepEqual(getMemory(db, before.id), before);
   const afterSchema = schema(db);
   const originalNames = new Set(beforeSchema.map(row => row.name));
-  assert.deepEqual(afterSchema.filter(row => originalNames.has(row.name)), beforeSchema);
+  const unchanged = row => row.name !== "recall_deliveries";
+  assert.deepEqual(afterSchema.filter(row => originalNames.has(row.name)).filter(unchanged), beforeSchema.filter(unchanged));
+  assert.ok(db.prepare("PRAGMA table_info(recall_deliveries)").all().some(row => row.name === "scope_json"));
   verifyDatabase(dbPath);
   backupDatabase(dbPath, join(directory, "backup.sqlite"));
   restoreDatabase(join(directory, "backup.sqlite"), join(directory, "restored.sqlite"));

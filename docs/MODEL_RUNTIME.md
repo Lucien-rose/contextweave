@@ -56,8 +56,12 @@ without strict schemas; results still pass the original local validation. There 
 no silent protocol fallback or second provider call. Anthropic schema constraints
 unsupported on the wire are expressed as descriptions and enforced locally.
 
-Tasks: `portrait`, `summary`, `jev`, `embedding`. Decision Model may keep Decisions or use a
-structured generator, but judgment authority/thresholds are unchanged. Anthropic
+Tasks: `portrait`, `summary`, `embedding`, `recall_judge`, `portrait_judge`,
+`lineage_judge`, and legacy `jev`. The three judgment routes can select separate
+connections, or deliberately share one. Each falls back to `jev`, then legacy
+environment configuration when unassigned. `portrait` remains the writer, separate
+from `portrait_judge` review. Decision Model supports Decisions or a structured
+generator. See [recall behavior](RECALL_UPGRADE.md) for active routing and fallback. Anthropic
 cannot be assigned to embeddings. Embedding dimensions must be declared and every
 response is checked. Model names are owner choices, never automatically upgraded.
 

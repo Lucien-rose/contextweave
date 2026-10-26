@@ -28,3 +28,8 @@ No model keys or provider routes are bundled. Runtime processing starts disabled
 CW_TIMEZONE defaults to UTC for calendar calculations and portrait promotion date counts. Health timers use the server timezone unless an explicit zone is supplied in their systemd schedule. Optional MOSS_RECALL_PROFILE_FILE must explicitly point to an owner-created vocabulary profile; no profile is loaded implicitly.
 
 Health status describes the recommended daily/weekly cadence; it does not inspect installed systemd units. Use systemctl list-timers to verify the actual schedule.
+
+`CW_JEV_MODE=off|observe|on` overrides automatic semantic recall selection. Omit it
+to use the configured Decision Model by default and local recall without one.
+`MOSS_RECALL_JEV_MODE` is the legacy equivalent. Task-specific model routes and
+per-request cooldown settings are documented in [RECALL_UPGRADE.md](RECALL_UPGRADE.md).

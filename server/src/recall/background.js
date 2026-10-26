@@ -4,7 +4,7 @@ import { compactRecallCue } from "./packing.js";
 import { excerpt } from "./presentation.js";
 
 export function isBackgroundEntry(entry) {
-  return !entry.rawDirectEvidence && (["ambient", "policy"].includes(entry.recallRole)
+  return entry.semanticBackground || !entry.rawDirectEvidence && (["ambient", "policy"].includes(entry.recallRole)
     || ["style", "ambient"].includes(entry.memory.kind));
 }
 

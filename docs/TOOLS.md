@@ -814,6 +814,46 @@ Use this when a message may connect to prior shared memories, promises, agreemen
       "default": false,
       "type": "boolean"
     },
+    "recall_scope": {
+      "description": "Host-owned client/surface identity. Only confirmed main-lane delivery starts cooldown; session is audit-only. Omit for legacy behavior.",
+      "type": "object",
+      "properties": {
+        "client": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "surface": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "session": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "cooldown_hours": {
+          "default": 24,
+          "type": "number",
+          "minimum": 0,
+          "maximum": 168
+        }
+      },
+      "required": [
+        "client",
+        "surface"
+      ],
+      "additionalProperties": false
+    },
+    "jev_mode": {
+      "description": "on uses semantic judgment, observe retains local results, off disables it. Configured models default to on. Provider failure falls back locally; successful omission is not a failure.",
+      "type": "string",
+      "enum": [
+        "off",
+        "observe",
+        "on"
+      ]
+    },
     "vector_mode": {
       "description": "Optional per-turn vector control for diagnostics or staged rollout. Omit to use server default.",
       "type": "string",
@@ -1154,6 +1194,15 @@ Run a non-mutating, body-free recall diagnostic. Compare off, observe, and on mo
       "enum": [
         "observe",
         "off",
+        "on"
+      ]
+    },
+    "jev_mode": {
+      "description": "on uses semantic judgment, observe retains local results, off disables it. Configured models default to on. Provider failure falls back locally; successful omission is not a failure.",
+      "type": "string",
+      "enum": [
+        "off",
+        "observe",
         "on"
       ]
     },
@@ -3276,6 +3325,27 @@ Inspect one Lineage's branch groups and persisted Decision Model shadow judgment
 }
 ```
 
+## moss_family_plan
+
+Build a read-only complete Lineage partition from current revision/sequence judgments and explicit supersession links. Returns before/after groups, evidence, conflicts and fingerprint. Unclear or uncovered group boundaries require review. Apply a reviewed ready plan using moss_family_group; no automatic edits.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "family_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    }
+  },
+  "required": [
+    "family_key"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
+```
+
 ## moss_family_group
 
 Regroup an inspected Lineage using a complete partition of its member IDs and its current fingerprint. Put revisions of one fact/event together; keep separate events in different groups. This changes duplicate selection only, never content, status, supersession or evidence. Host may curate groups under the user's existing memory-management instruction; no extra confirmation flag is needed.
@@ -4101,6 +4171,72 @@ Attach or detach an inspected exact memory ID to an inspected entity ID. This is
   },
   "required": [
     "entity_id",
+    "memory_id"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
+```
+
+## moss_relation_discover
+
+Find bounded relationship leads around one visible memory using shared entities, Lineage and tags. Returns pinned excerpts and coverage, never inferred causality or new graph edges. Inspect the evidence, then use relation_propose and relation_review.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "context": {
+      "default": "general",
+      "type": "string",
+      "enum": [
+        "general",
+        "private",
+        "intimate"
+      ]
+    },
+    "intimacy_mode": {
+      "default": "off",
+      "type": "string",
+      "enum": [
+        "on",
+        "off",
+        "model",
+        "responsive",
+        "proactive",
+        "scene"
+      ]
+    },
+    "namespace": {
+      "default": "real",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[a-z0-9][a-z0-9:._/-]*$"
+    },
+    "query": {
+      "default": "",
+      "type": "string",
+      "maxLength": 4000
+    },
+    "memory_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240
+    },
+    "limit": {
+      "default": 8,
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20
+    },
+    "offset": {
+      "default": 0,
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
     "memory_id"
   ],
   "$schema": "http://json-schema.org/draft-07/schema#"

@@ -1,6 +1,6 @@
 import { z } from "zod/v4";
 
-export const TASKS = ["portrait", "summary", "jev", "embedding"];
+export const TASKS = ["portrait", "summary", "jev", "recall_judge", "portrait_judge", "lineage_judge", "embedding"];
 export const PROTOCOLS = ["openai", "google", "anthropic", "decisions"];
 export const connectionSchema = z.object({
   name: z.string().trim().min(1).max(100),
@@ -19,7 +19,7 @@ export const connectionSchema = z.object({
 }).strict();
 
 export function supportsTask(connection, task) {
-  const capability = task === "embedding" ? "embedding" : task === "jev" && connection.protocol === "decisions"
+  const capability = task === "embedding" ? "embedding" : ["jev", "recall_judge", "portrait_judge", "lineage_judge"].includes(task) && connection.protocol === "decisions"
     ? "decisions" : "generate";
   return connection.capabilities.includes(capability);
 }

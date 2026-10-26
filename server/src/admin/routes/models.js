@@ -1,3 +1,4 @@
+import { TASKS } from "../../models/contract.js";
 import { createModelService } from "../../models/service.js";
 import { json, readJson } from "../http.js";
 
@@ -18,8 +19,8 @@ export function createModelRoutes({ db }) {
       if (req.method === "DELETE" && id && !match[2]) return json(res, 200, models.remove(id));
     }
     if (url.pathname === "/api/models/routes" && req.method === "GET") return json(res, 200, { routes: models.routes() });
-    const route = url.pathname.match(/^\/api\/models\/routes\/(portrait|summary|jev|embedding)$/);
-    if (route && req.method === "PUT") {
+    const route = url.pathname.match(/^\/api\/models\/routes\/([^/]+)$/);
+    if (route && TASKS.includes(route[1]) && req.method === "PUT") {
       const input = await readJson(req);
       if (input.connection_id !== null && typeof input.connection_id !== "string") return json(res, 400, { error: "connection_id required (string or null)" });
       return json(res, 200, { routes: models.setRoute(route[1], input.connection_id) });

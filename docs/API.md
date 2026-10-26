@@ -32,3 +32,7 @@ current record and reconsider the change; do not blindly overwrite it. Model API
 keys are accepted on save and encrypted at rest; listing configurations returns
 key availability only, never plaintext keys. Host clients should clear the key
 input after a successful save.
+
+See [recall and navigation upgrade](RECALL_UPGRADE.md) for semantic/local routing,
+host-only status, confirmed surface cooldown, Atlas leads and reviewable Lineage
+partitions. These reuse the existing domain services and host delivery contract.

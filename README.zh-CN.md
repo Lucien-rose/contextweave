@@ -30,12 +30,19 @@ npm start
 
 ## 开源范围
 
-不包含私人 Skill、真实记忆、用户画像、生产配置、私有前端或原仓库历史。此包为 1.0.0 独立部署源码；公开仓库为 [Lucien-rose/contextweave](https://github.com/Lucien-rose/contextweave)。不要直接覆盖私人部署。
+不包含私人 Skill、真实记忆、用户画像、生产配置、私有前端或原仓库历史。此包为 1.1.0 独立部署源码；公开仓库为 [Lucien-rose/contextweave](https://github.com/Lucien-rose/contextweave)。不要直接覆盖私人部署。
 
-后续召回评测、关系候选、召回日志与概要自动排队见[路线图](docs/ROADMAP.md)，不阻塞 1.0 使用。
+后续召回评测、召回日志及可选概要排队见[路线图](docs/ROADMAP.md)。
 
 ## 署名与联系
 
 Apache-2.0；Copyright 2026 Phina。由 Phina 创立，与 Lucien（OpenAI Codex）共同设计、实现、审查和打磨。完整分工见 AUTHORS.md。
 
 [The Letterbox｜私人来信](https://important-tire-245.notion.site/7660116d784a4f61806d3ad3533207a9)。欢迎自愿分享使用经历和改良；来信不是许可证要求。邮箱自动提醒未接入。
+
+## 本次优化
+
+长记忆直接召回优先返回相关原文片段；配置好的判断模型参与普通召回，
+失败时回到本地规则。新增确认注入后的窗口冷却、独立的召回/画像/Lineage
+判断路由，以及 Atlas 关系线索和 Lineage 分组提案。
+详见[接入说明](docs/RECALL_UPGRADE.md)。接入宿主仍负责状态显示与注入确认。

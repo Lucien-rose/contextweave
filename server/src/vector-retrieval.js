@@ -311,6 +311,7 @@ function qualifyVectorItems(items) {
     threshold: round(threshold),
     chunk_index: item.chunk_index,
     chunk_kind: item.chunk_kind,
+    chunk_start: item.chunk_start, chunk_end: item.chunk_end, content_hash: item.content_hash,
   }));
 }
 

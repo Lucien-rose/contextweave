@@ -76,6 +76,7 @@ function vectorPoint(item, vector) {
         memory_id: item.memory.id,
         chunk_index: item.chunk_index,
         chunk_kind: item.chunk_kind,
+        chunk_start: item.chunk_start, chunk_end: item.chunk_end, content_hash: item.memory.content_hash,
         status: item.memory.status,
         sensitivity: item.memory.sensitivity,
         scope: item.memory.scope,

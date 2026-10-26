@@ -4,6 +4,7 @@ import { readLifecycleAuthorities } from "../memory-lifecycle.js";
 import { cardArcMemberships, membershipsFor } from "../memory-navigation.js";
 import { prepareVectorRecall, prepareAssociativeVectorRecall } from "../vector-retrieval.js";
 import { recallMemories as recall, recallMemoriesWithTrace as trace } from "./pipeline.js";
+import { runSemanticRecall } from "./semantic-runtime.js";
 import { progressiveRecall as progressive } from "./progressive.js";
 import { readFamilyGroups } from "../family/groups.js";
 
@@ -55,8 +56,8 @@ export function recallMemoriesWithTrace(db, input) {
 }
 
 export function progressiveRecall(db, input) {
-  return progressive(createRecallRepository(db), input, {
+  return runSemanticRecall(db, input || {}, async options => progressive(createRecallRepository(db), options, {
     primary: (options) => prepareVectorRecall(db, options),
     association: (options) => prepareAssociativeVectorRecall(db, options),
-  });
+  }));
 }

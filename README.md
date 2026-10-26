@@ -63,3 +63,6 @@ Apache-2.0. Copyright 2026 Phina. Created by Phina in collaboration with Lucien 
 [The Letterbox — share your ContextWeave story privately](https://important-tire-245.notion.site/7660116d784a4f61806d3ad3533207a9). Sharing is voluntary and is not a license condition. Bug reports belong in repository Issues once the repository is published.
 
 Source repository: [Lucien-rose/contextweave](https://github.com/Lucien-rose/contextweave). See RELEASE_NOTES.md for release scope. Existing moss_* tool names, MOSS_* variables and service paths are retained for compatibility. Fresh users configure their own identity, policies and providers.
+
+See [the recall and navigation upgrade](docs/RECALL_UPGRADE.md) for the current
+semantic routing, delivery confirmation and review-plan contracts.

@@ -1,4 +1,5 @@
 import { defaults } from "../defaults.js";
+import { recallScopeSchema } from "../recall/cooldown.js";
 import { queryRepresentationSchema } from "../recall/query-representation.js";
 import { recallResponse } from "../recall/response.js";
 import {
@@ -164,6 +165,8 @@ export function registerCoreTools(server, { core, continuity }) {
       family_policy: familyPolicySchema.default("representative"),
       allow_repeat: z.boolean().default(false),
       allow_repeat_if_stale: z.boolean().default(false),
+      recall_scope: recallScopeSchema.optional().describe("Host-owned client/surface identity. Only confirmed main-lane delivery starts cooldown; session is audit-only. Omit for legacy behavior."),
+      jev_mode: z.enum(["off", "observe", "on"]).optional().describe("on uses semantic judgment, observe retains local results, off disables it. Configured models default to on. Provider failure falls back locally; successful omission is not a failure."),
       vector_mode: z.enum(["off", "observe", "on"]).optional()
         .describe("Optional per-turn vector control for diagnostics or staged rollout. Omit to use server default."),
     },
@@ -173,9 +176,11 @@ export function registerCoreTools(server, { core, continuity }) {
     recently_read_ids = [], recently_read_hashes = [], recently_read_families = [],
     query_representation, background_limit, background_budget_chars, cue_neighborhood_mode,
     context_envelope, recall_control, family_policy = "representative", allow_repeat = false, allow_repeat_if_stale = false,
-    vector_mode, total_budget_chars = defaults.totalChars,
+    recall_scope, jev_mode, vector_mode, total_budget_chars = defaults.totalChars,
   }) => {
+    let hostStatus = null;
     const recalled = await core.recallForDelivery({
+      onRecallStatus: status => { hostStatus = status; },
       deliveryMode: delivery_mode,
       query, context, intimacyMode: intimacy_mode, limit, contextBudgetChars: context_budget_chars, includeArchived: include_archived,
       recentlyReadIds: recently_read_ids, recentlyReadHashes: recently_read_hashes,
@@ -184,10 +189,11 @@ export function registerCoreTools(server, { core, continuity }) {
       backgroundBudgetChars: background_budget_chars, cueNeighborhoodMode: cue_neighborhood_mode,
       contextEnvelope: context_envelope, recallControl: recall_control,
       allowRepeat: allow_repeat, allowRepeatIfStale: allow_repeat_if_stale,
-      vectorMode: vector_mode,
+      recallScope: recall_scope, jevMode: jev_mode, vectorMode: vector_mode,
       totalBudgetChars: total_budget_chars,
     });
-    return result(recallResponse(recalled, { query }));
+    return { ...result(recallResponse(recalled, { query })),
+      ...(hostStatus ? { _meta: { recall_status: hostStatus } } : {}) };
   });
   server.registerTool("moss_recall_trace", {
     description: "Run a non-mutating, body-free recall diagnostic. Compare off, observe, and on modes without returning memory bodies or recording a recall.",
@@ -212,6 +218,7 @@ export function registerCoreTools(server, { core, continuity }) {
       allow_repeat: z.boolean().default(true),
       allow_repeat_if_stale: z.boolean().default(false),
       shadow_mode: z.enum(["observe", "off", "on"]).default("observe"),
+      jev_mode: z.enum(["off", "observe", "on"]).optional().describe("on uses semantic judgment, observe retains local results, off disables it. Configured models default to on. Provider failure falls back locally; successful omission is not a failure."),
       vector_mode: z.enum(["observe", "off", "on"]).default("observe"),
       jev_shadow_mode: z.enum(["off", "observe"]).default("off")
         .describe("Explicit read-only Decision Model comparison. Sends bounded candidate snippets to the configured model; never changes recall or writes memories."),
@@ -222,9 +229,11 @@ export function registerCoreTools(server, { core, continuity }) {
     recently_read_ids = [], recently_read_hashes = [], recently_read_families = [],
     query_representation, background_limit, background_budget_chars, cue_neighborhood_mode,
     context_envelope, recall_control, family_policy = "representative", allow_repeat = true,
-    allow_repeat_if_stale = false, shadow_mode = "observe", vector_mode = "observe", jev_shadow_mode = "off",
+    allow_repeat_if_stale = false, jev_mode, shadow_mode = "observe", vector_mode = "observe", jev_shadow_mode = "off",
   }) => {
+    let hostStatus = null;
     const diagnostic = await core.recallWithVectorTrace({
+      onRecallStatus: status => { hostStatus = status; },
       query, context, intimacyMode: intimacy_mode, limit, contextBudgetChars: context_budget_chars, includeArchived: include_archived,
       recentlyReadIds: recently_read_ids, recentlyReadHashes: recently_read_hashes,
       recentlyReadFamilies: recently_read_families, familyPolicy: family_policy,
@@ -232,7 +241,7 @@ export function registerCoreTools(server, { core, continuity }) {
       backgroundBudgetChars: background_budget_chars, cueNeighborhoodMode: cue_neighborhood_mode,
       contextEnvelope: context_envelope, recallControl: recall_control, allowRepeat: allow_repeat,
       allowRepeatIfStale: allow_repeat_if_stale, recordRecall: false, shadowMode: shadow_mode,
-      vectorMode: vector_mode, jevShadowMode: jev_shadow_mode,
+      jevMode: jev_mode, vectorMode: vector_mode, jevShadowMode: jev_shadow_mode,
     });
     const trace = compactDiagnosticTrace(diagnostic.trace);
     return result({
@@ -241,6 +250,7 @@ export function registerCoreTools(server, { core, continuity }) {
       shadow_mode,
       vector_mode,
       final_ids: trace.final_ids,
+      ...(hostStatus ? { recall_status: hostStatus } : {}),
       trace,
     });
   });

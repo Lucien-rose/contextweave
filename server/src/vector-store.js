@@ -95,7 +95,7 @@ export async function queryQdrant(config, vector, {
       query: Array.from(vector),
       ...(filter ? { filter } : {}),
       limit: Math.max(1, Math.min(100, Number(limit) || 24)),
-      with_payload: ["memory_id", "chunk_index", "chunk_kind", "status", "sensitivity", "scope", "family_key", "projection_hash"],
+      with_payload: ["memory_id", "chunk_index", "chunk_kind", "chunk_start", "chunk_end", "content_hash", "status", "sensitivity", "scope", "family_key", "projection_hash"],
       with_vector: false,
       params: { hnsw_ef: 128, exact: false },
     },
@@ -108,6 +108,7 @@ export async function queryQdrant(config, vector, {
     rank: index + 1,
     chunk_index: Number(point.payload?.chunk_index) || 0,
     chunk_kind: String(point.payload?.chunk_kind || "semantic"),
+    chunk_start: point.payload?.chunk_start, chunk_end: point.payload?.chunk_end, content_hash: point.payload?.content_hash,
     payload: point.payload || {},
   })).filter((item) => item.id);
 }

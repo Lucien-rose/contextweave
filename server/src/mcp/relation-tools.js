@@ -1,3 +1,4 @@
+import { discoverRelations, relationDiscoverySchema } from "../relation/discovery.js";
 import { result } from "./shared.js";
 import { relationBundleSchema, relationListSchema, relationPathsSchema, relationProposeSchema, relationReadSchema, relationReviewSchema } from "../relation/contract.js";
 import { listRelations, proposeRelation, readRelation, reviewRelation } from "../relation/service.js";
@@ -6,6 +7,8 @@ import { relationBundle } from "../relation/bundle.js";
 
 export function registerRelationTools(server, { db }) {
   for (const [name, schema, action, readOnly, description] of [
+    ["moss_relation_discover", relationDiscoverySchema, discoverRelations, true,
+      "Find bounded relationship leads around one visible memory using shared entities, Lineage and tags. Returns pinned excerpts and coverage, never inferred causality or new graph edges. Inspect the evidence, then use relation_propose and relation_review."],
     ["moss_relation_propose", relationProposeSchema, proposeRelation, false,
       "Propose an explicitly understood relation after inspecting its exact endpoints and original evidence. Supply verbatim excerpts and current hashes. Scope real people and fictional works/branches separately. This creates a pending assertion, never a canonical fact or recall boost. Similarity, co-occurrence and chronology alone do not prove influence or causality."],
     ["moss_relation_review", relationReviewSchema, reviewRelation, false,

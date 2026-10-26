@@ -1,4 +1,5 @@
-import { excerpt, recallRepresentation } from "./presentation.js";
+import { directReading } from "./direct-reading.js";
+import { excerpt } from "./presentation.js";
 
 const TIER_ORDER = Object.freeze({ T0: 0, T1: 1, T2: 2 });
 const DETAIL_EXCERPT_LIMIT = Object.freeze({ T0: 360, T1: 220, T2: 140 });
@@ -48,8 +49,7 @@ export function progressivePresentation(entry, summary) {
       ambient_triggers: (summary.ambient_triggers || []).slice(0, 8),
     } : {}),
     ...recallPresentation(entry),
-    ...(!cueOnly ? { content: recallRepresentation(entry.memory).content,
-      detail_level: recallRepresentation(entry.memory).kind === "summary" ? "summary" : "full" } : {}),
+    ...(!cueOnly ? directReading(entry) : {}),
   };
 }
 
@@ -97,6 +97,7 @@ export function tierCounts(memories) {
 }
 
 function recallTierFor(entry) {
+  if (entry.semanticBackground) return "T1";
   if (entry.rawDirectEvidence) return "T0";
   if (entry.entityEvidence) return "T1";
   if (entry.associationEvidence) return "T2";
@@ -115,6 +116,7 @@ function isAmbientEntry(entry) {
 
 function recallRoleFor(entry, tier) {
   const memory = entry.memory;
+  if (entry.semanticBackground) return "ambient";
   if (!entry.rawDirectEvidence
     && memory.standing_opt_in
     && memory.activation_policy === "relationship_contextual") return "ambient";
@@ -139,7 +141,7 @@ function recallReasonFor(entry, tier, role) {
   if (role === "ambient") return "standing ambient context may naturally accompany the current exchange";
   if (tier === "T0") return "the current query directly matches this memory";
   if (tier === "T2") return `second-hop association from ${entry.associationSeedId || "a relevant memory"}`;
-  if (entry.semanticDecision) return "Decision Model shadow suggests relevant supporting context";
+  if (entry.semanticDecision) return "Decision Model selects relevant supporting context";
   if (entry.vectorEvidence) return "semantic evidence makes this memory relevant in one hop";
   if (entry.situationEvidence) return "situation evidence makes this memory relevant in one hop";
   if (entry.contextualMatch) return "the trusted context envelope makes this memory relevant in one hop";
@@ -166,7 +168,7 @@ function recallPathFor(entry, tier) {
 
 function sourceChannelsFor(entry) {
   const channels = ["formal"];
-  if (entry.semanticDecision) channels.push("jev-shadow");
+  if (entry.semanticDecision) channels.push("jev");
   if (entry.lexicalBoost > 0) channels.push("fts");
   if (entry.contextualMatch) channels.push("context-envelope");
   if (entry.situationEvidence) channels.push("situation");

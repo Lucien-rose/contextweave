@@ -68,3 +68,7 @@ Host conversation ingestion and context placement remain outside this backend.
 Session Capsules and offline Steward are documented in CAPSULES_AND_STEWARD.md;
 index generations and health inspection are documented in VECTOR_AND_HEALTH.md.
 Installation does not enable disabled model workers or make paid provider calls.
+
+See [recall and navigation upgrade](RECALL_UPGRADE.md) for semantic/local routing,
+host-only status, confirmed surface cooldown, Atlas leads and reviewable Lineage
+partitions. These reuse the existing domain services and host delivery contract.

@@ -1,3 +1,4 @@
+import { scopedRecallInput, recordSurfaceDelivery } from "./cooldown.js";
 import { updateCharacterCount } from "./response-budget.js";
 import { randomUUID } from "node:crypto";
 import { getMemory } from "../database.js";
@@ -7,17 +8,17 @@ import { buildHomecomingBundle, memoriesForDate } from "../retrieval.js";
 // Keep legacy clients working. Confirmed delivery is an explicit host contract:
 // the host acknowledges only the items that reached the model's context.
 export function recallForDelivery(db, input = {}) {
-  const { deliveryMode = "immediate", ...recallInput } = input;
+  const { deliveryMode = "immediate", ...recallInput } = scopedRecallInput(db, input);
   if (!["immediate", "confirmed"].includes(deliveryMode)) throw new TypeError("Invalid delivery mode");
   const recalled = recallMemoriesWithTrace(db, {
     ...recallInput,
     recordRecall: deliveryMode === "immediate",
   });
-  return attachDelivery(db, recalled, [...recalled.memories, ...(recalled.background_memories || [])], deliveryMode);
+  return attachDelivery(db, recalled, [...recalled.memories, ...(recalled.background_memories || [])], deliveryMode, recallInput.recallScope);
 }
 
 export async function recallForDeliveryWithVector(db, input = {}) {
-  const { deliveryMode = "immediate", vectorMode = null, ...recallInput } = input;
+  const { deliveryMode = "immediate", vectorMode = null, ...recallInput } = scopedRecallInput(db, input);
   if (!["immediate", "confirmed"].includes(deliveryMode)) throw new TypeError("Invalid delivery mode");
   const recalled = await progressiveRecall(db, {
     ...recallInput,
@@ -25,7 +26,7 @@ export async function recallForDeliveryWithVector(db, input = {}) {
     recordRecall: deliveryMode === "immediate",
     syncIndex: true,
   });
-  return attachDelivery(db, recalled, [...recalled.memories, ...(recalled.background_memories || [])], deliveryMode);
+  return attachDelivery(db, recalled, [...recalled.memories, ...(recalled.background_memories || [])], deliveryMode, recallInput.recallScope);
 }
 
 export function bootstrapForDelivery(db, { deliveryMode = "immediate", ...input } = {}) {
@@ -47,13 +48,13 @@ function validateDeliveryMode(mode) {
   if (!["immediate", "confirmed"].includes(mode)) throw new TypeError("Invalid delivery mode");
 }
 
-function attachDelivery(db, payload, memories, deliveryMode) {
+function attachDelivery(db, payload, memories, deliveryMode, scope = null) {
   if (deliveryMode === "immediate" || !memories.length) return payload;
   const id = `delivery:${randomUUID()}`;
   const selected = [...new Map(memories.map((memory) => [memory.id,
-    { id: memory.id, hash: memory.content_hash }])).values()];
-  db.prepare(`INSERT INTO recall_deliveries(id, selected_json, created_at) VALUES (?, ?, ?)`)
-    .run(id, JSON.stringify(selected), new Date().toISOString());
+    { id: memory.id, hash: memory.content_hash, lane: payload.memories?.some(item => item.id === memory.id) ? "main" : "background" }])).values()];
+  db.prepare(`INSERT INTO recall_deliveries(id, selected_json, created_at, scope_json) VALUES (?, ?, ?, ?)`)
+    .run(id, JSON.stringify(selected), new Date().toISOString(), scope ? JSON.stringify(scope) : null);
   const response = { ...payload, delivery: { receipt_id: id, status: "prepared" } };
   if (response.budgets) updateCharacterCount(response);
   return response;
@@ -91,6 +92,8 @@ export function acknowledgeRecallDelivery(db, { receiptId, memoryIds } = {}) {
     const deliveredAt = new Date().toISOString();
     const mark = db.prepare(`UPDATE memories SET last_recalled_at = ?, recall_count = recall_count + 1 WHERE id = ?`);
     for (const id of unchanged) mark.run(deliveredAt, id);
+    recordSurfaceDelivery(db, receipt.scope_json ? JSON.parse(receipt.scope_json) : null,
+      selected.filter(item => unchanged.includes(item.id)), deliveredAt);
     db.prepare(`UPDATE recall_deliveries SET delivered_ids_json = ?, delivered_at = ? WHERE id = ?`)
       .run(JSON.stringify(ids), deliveredAt, receiptId);
     db.exec("COMMIT");
@@ -109,6 +112,7 @@ export function pruneRecallDeliveries(db, { at = new Date(), apply = false } = {
     OR (delivered_at IS NULL AND created_at < ?)`;
   const cutoffs = [cutoff(30), cutoff(90)];
   const count = Number(db.prepare(`SELECT COUNT(*) AS count FROM recall_deliveries WHERE ${predicate}`).get(...cutoffs).count);
+  if (apply) db.prepare("DELETE FROM recall_surface_deliveries WHERE delivered_at < ?").run(cutoff(30));
   const removed = apply ? Number(db.prepare(`DELETE FROM recall_deliveries WHERE ${predicate}`).run(...cutoffs).changes) : 0;
   return { mode: apply ? "applied" : "dry-run", eligible: count, removed,
     delivered_retention_days: 30, pending_retention_days: 90 };

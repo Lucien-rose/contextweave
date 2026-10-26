@@ -13,7 +13,7 @@ export async function recallWithJevShadow(db, input = {}, dependencies = {}) {
   const report = { schema_version: "jev-shadow-v1", mode: enabled ? "observe" : "off",
     activated: false, answer_authority_granted: false, status: "off", baseline_release: "0.9.3-rc.3.37" };
   let captured;
-  const diagnostic = await progressiveRecall(db, { ...input, recordRecall: false, syncIndex: false,
+  const diagnostic = await progressiveRecall(db, { ...input, jevMode: "off", recordRecall: false, syncIndex: false,
     captureCandidates: enabled && config.available ? (value) => { captured = value; } : null });
   if (!enabled) return diagnostic;
   const shadowStart = performance.now();

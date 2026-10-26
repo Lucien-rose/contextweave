@@ -42,6 +42,24 @@ test("standalone backend serves owner writes and real MCP recall without private
     const result = await client.callTool({ name: "moss_read", arguments: { memory_id: "test:cobalt" } });
     assert.equal(result.isError, undefined);
     assert.match(JSON.stringify(result), /Use staged deployment/);
+    assert.ok(tools.tools.some(tool => tool.name === "moss_family_plan"));
+    assert.ok(tools.tools.some(tool => tool.name === "moss_relation_discover"));
+    const recallInput = { query: "Cobalt release", jev_mode: "on", vector_mode: "off", delivery_mode: "confirmed",
+      recall_scope: { client: "test", surface: "window" } };
+    const recalled = await client.callTool({ name: "moss_recall", arguments: recallInput });
+    assert.equal(recalled._meta.recall_status.jev_status, "not-configured");
+    assert.doesNotMatch(JSON.stringify(recalled.content), /not-configured|fallback_used/);
+    const traced = await client.callTool({ name: "moss_recall_trace", arguments: {
+      query: "Cobalt release", jev_mode: "on", vector_mode: "off",
+    } });
+    assert.equal(traced.structuredContent.recall_status.jev_status, "not-configured");
+    const httpRecall = await fetch(`${base}/api/gateway/recall`, { method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(recallInput) });
+    const payload = await httpRecall.json();
+    assert.equal(httpRecall.status, 200);
+    assert.equal(payload.host_status.fallback_used, true);
+    assert.equal(payload.memories[0].id, "test:cobalt");
+
   } finally {
     await client.close();
     await new Promise(resolve => server.close(resolve));
