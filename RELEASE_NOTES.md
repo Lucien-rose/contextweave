@@ -1,3 +1,18 @@
+# ContextWeave 1.2.0
+
+Portable memory-package import and a complete bilingual onboarding guide.
+
+- New `npm run memory:import` CLI accepts JSON packages or memory arrays, with read-only dry-run by default.
+- Preview reports new, duplicate, conflicting and invalid records without printing memory bodies.
+- Explicit `--apply` runs append-only, transactional imports; `--skip-problems` can import safe new records after review.
+- Imported memories retain supported fields and evidence excerpts, generate audit/Lineage receipts, refresh local search and queue vector work.
+- Existing canonical and deleted IDs are never overwritten or reused. Owner JSON export is a **partial** import source, not a full restore.
+- English and Chinese README now include deployment and post-install import instructions.
+
+For full database recovery, continue to use the verified SQLite snapshot restore workflow. Import does not reconstruct historical portraits, source materials, Lineage changes, continuity, tombstones or vector generations.
+
+See [memory import](docs/MEMORY_IMPORT.md) for examples, safeguards and deployment steps.
+
 # ContextWeave 1.1.0
 
 Long T0 recall now opens a relevant original-text window. Configured Decision Models
