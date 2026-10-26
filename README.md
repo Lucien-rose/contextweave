@@ -18,6 +18,10 @@ ContextWeave is a self-hosted long-term memory backend for AI agents that need c
 
 Instead of treating memory as a pile of static text chunks, ContextWeave keeps records that can evolve, retain their evidence, and be retrieved selectively. It separates canonical storage from optional retrieval indexes, so an agent can revisit an original source without loading an entire conversation history into every prompt.
 
+<p align="center">
+  <img src="assets/contextweave-demo.gif" alt="ContextWeave cross-session memory demo" width="100%">
+</p>
+
 It is a backend, not a chat frontend. Hosts decide what to ingest, when to recall, and where returned context belongs.
 
 ## Why ContextWeave?
@@ -53,25 +57,9 @@ Optional model routes can assist ambiguous recall, portrait processing and maint
 
 ## Architecture
 
-```text
-                        Host / AI agent
-                              |
-                         MCP / HTTP
-                              |
-                     +--------v--------+
-                     |   ContextWeave  |
-                     |                 |
-                     | Recall / Lineage|
-                     | Portrait / Atlas|
-                     | Capsule / Health|
-                     +-----+-----+-----+
-                           |     |
-                  canonical|     |derived
-                           |     |
-                        SQLite  Qdrant
-                                  |
-                              Embeddings
-```
+<p align="center">
+  <img src="assets/contextweave-architecture.jpg" alt="ContextWeave architecture overview" width="100%">
+</p>
 
 **SQLite is the source of truth.** Qdrant and embeddings are optional, rebuildable retrieval infrastructure. The host retains responsibility for conversation ingestion, session state, prompt composition, context placement and frontend behavior.
 
