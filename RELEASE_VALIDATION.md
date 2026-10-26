@@ -1,3 +1,20 @@
+# ContextWeave 1.2.0 — release validation
+
+Validated 2026-10-26 with GitHub Actions / Node.js 24 using synthetic data.
+
+- Public suite: **31/31 passed** (includes 8 memory-package tests: preview, idempotency, evidence, conflicts, atomic blocking, CLI, privacy drift, invalid dates, cross-ID review, and parallel episode branches).
+- Architecture: **210 source modules, 0 import cycles**, version authority clean.
+- Public boundary scan: passed.
+- Synthetic demo: passed.
+- Install verification: `npm ci` passed.
+- [CI run](https://github.com/Lucien-rose/contextweave/actions/runs/40313479686): success.
+
+Import is local CLI only. A read-only preview never writes; apply rechecks under one SQLite transaction. Conflicting or invalid packages are rejected unless explicitly skipped, and existing IDs are never overwritten. Imported source references preserve supported evidence excerpts without reusing foreign material IDs. Historical Lineages, portraits, full source materials, continuity and tombstones remain snapshot-restore territory.
+
+These tests use synthetic records. Real third-party provider availability, live host frontend integration and deployment-specific backup/restore rehearsal are not claimed here.
+
+---
+
 # Upgrade validation
 
 Validated 2026-10-26 with Node.js 24.22.1 / npm 11.9.0 using synthetic data.
