@@ -1,68 +1,202 @@
-# ContextWeave Core
+# ContextWeave
 
-A self-hosted memory backend for long-running conversations. SQLite is the source
-of truth; optional embeddings and Qdrant provide a rebuildable search index.
-ContextWeave supplies recall, evidence, versioned Lineages, portraits, continuity,
-Session Capsules, review proposals, Atlas navigation and Steward maintenance APIs.
+**Long-term memory infrastructure for AI agents.**
 
-This package runs independently. It contains no chat frontend, personal archive,
-private application, account credentials or prefilled user portrait.
+[![CI](https://github.com/Lucien-rose/contextweave/actions/workflows/ci.yml/badge.svg)](https://github.com/Lucien-rose/contextweave/actions/workflows/ci.yml)
+![Core](https://img.shields.io/badge/Core-1.1.0-234f46)
+![Node](https://img.shields.io/badge/Node-%E2%89%A524-339933?logo=node.js&logoColor=white)
+[![License](https://img.shields.io/badge/License-Apache--2.0-234f46)](LICENSE)
 
-## Start locally
+**English** · [简体中文](README.zh-CN.md)
 
-Use Node.js 24 LTS. From the extracted backend directory:
+---
+
+> **AI agents can remember a conversation.**  
+> **ContextWeave helps them remember a life.**
+
+ContextWeave is a self-hosted long-term memory backend for AI agents that need continuity across sessions, models, and applications.
+
+Instead of treating memory as a pile of static text chunks, ContextWeave keeps records that can evolve, retain their evidence, and be retrieved selectively. It separates canonical storage from optional retrieval indexes, so an agent can revisit an original source without loading an entire conversation history into every prompt.
+
+It is a backend, not a chat frontend. Hosts decide what to ingest, when to recall, and where returned context belongs.
+
+## Why ContextWeave?
+
+Long-running agents encounter problems that ordinary chat history and simple vector search do not solve on their own.
+
+A preference changes. Two similar events need to coexist. A long source contains one relevant sentence. A new session needs a compact handoff. A summary survives, but its original evidence has disappeared.
+
+ContextWeave is designed around four principles:
+
+**Memory should evolve.** Changes, corrections, coexistence, and reviewable Lineage histories are explicit rather than silently overwriting the past.
+
+**Recall should be selective.** Direct matches take priority; bounded supporting and background memories are optional. No relevant memory is also a valid result. Long records can open onto a relevant original-text window.
+
+**Memory should remain traceable.** Source evidence, change receipts, and progressive navigation preserve routes from recalled cues back to canonical records.
+
+**Continuity should survive a session.** Portraits, Session Capsules, and host-managed handoffs carry useful context forward without replaying a full archive.
+
+## Features
+
+| Area | What it provides |
+| --- | --- |
+| **Progressive recall** | Direct, supporting and associative retrieval with explicit context budgets, optional vector search and semantic judgment. |
+| **Evidence and source context** | Canonical records, original-text windows, source references and inspectable provenance. |
+| **Lineage and lifecycle** | Revisions, coexistence, family branches, change receipts, review proposals and deletion handling. |
+| **Portraits** | Stable, medium-term and temporary context with separate lifecycles and bounded processing. |
+| **Atlas navigation** | Read-only relationship leads, entities, relations and evidence paths. |
+| **Session continuity** | Session Capsules, continuity checkpoints and compact host handoffs. |
+| **Maintenance** | Offline Steward batches, daily/weekly health checks, backups and index migration/rollback. |
+| **Portability** | Owner JSON export, transactional memory-package import and authoritative database snapshots. |
+
+Optional model routes can assist ambiguous recall, portrait processing and maintenance. They are not required for local SQLite recall, and provider failure must not silently rewrite canonical memory.
+
+## Architecture
+
+```text
+                        Host / AI agent
+                              |
+                         MCP / HTTP
+                              |
+                     +--------v--------+
+                     |   ContextWeave  |
+                     |                 |
+                     | Recall / Lineage|
+                     | Portrait / Atlas|
+                     | Capsule / Health|
+                     +-----+-----+-----+
+                           |     |
+                  canonical|     |derived
+                           |     |
+                        SQLite  Qdrant
+                                  |
+                              Embeddings
+```
+
+**SQLite is the source of truth.** Qdrant and embeddings are optional, rebuildable retrieval infrastructure. The host retains responsibility for conversation ingestion, session state, prompt composition, context placement and frontend behavior.
+
+See [Architecture](docs/ARCHITECTURE.md) and [Host Integration](docs/HOST_INTEGRATION.md).
+
+## Quick start
+
+Requires **Node.js 24+** and npm. No paid model or Qdrant installation is needed for basic recall.
 
 ```sh
+git clone https://github.com/Lucien-rose/contextweave.git
+cd contextweave
 npm ci
+
 export MOSS_CONFIG_DIR="$PWD/data/config"
 npm run init
 export MOSS_ADMIN_TOKEN=$(node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("hex"))')
 npm start
 ```
 
-The HTTP server binds to `127.0.0.1:2091`. `/health` is unauthenticated and returns
-only health/version. `/mcp` and every `/api/` endpoint require
-`Authorization: Bearer <MOSS_ADMIN_TOKEN>`. Store the token in your service
-configuration for subsequent restarts. Use a TLS reverse proxy for remote access.
+The HTTP server binds to `127.0.0.1:2091` by default. `GET /health` is unauthenticated and returns health/version only. Every `/api/` and `/mcp` endpoint requires `Authorization: Bearer <MOSS_ADMIN_TOKEN>`. Persist the token securely for restarts; use TLS for remote access.
 
-For a local MCP host, `npm run start:stdio` uses process transport without an HTTP
-token. The host launches the process with its own working directory and configuration.
+For local MCP process transport:
 
-`npm test` runs synthetic integration checks; `npm run demo` demonstrates recall.
-Neither needs a paid model. Plain SQLite recall works before optional models are configured.
+```sh
+npm run start:stdio
+```
+
+For a synthetic recall demonstration and integration tests:
+
+```sh
+npm run demo
+npm test
+```
+
+## Import existing memories after deployment
+
+ContextWeave accepts a local JSON memory package with a read-only preview before any writes. It supports new records, duplicate detection, conflict reporting, and transactional apply. Existing canonical memories are never silently overwritten.
+
+Example `memories.json`:
+
+```json
+{
+  "format": "contextweave-memory-package",
+  "version": 1,
+  "memories": [
+    {
+      "title": "Travel preference",
+      "content": "Prefers quiet trips with no more than two major stops per day.",
+      "kind": "preference",
+      "tags": ["travel"]
+    }
+  ]
+}
+```
+
+From an initialized local installation, with the backend stopped before applying changes:
+
+```sh
+# Preview only; no database changes.
+npm run memory:import -- ./memories.json --db ./data/moss-memory.sqlite
+
+# After making a verified database backup and reviewing the preview:
+npm run memory:import -- ./memories.json --db ./data/moss-memory.sqlite --apply
+```
+
+Conflicts and invalid records block apply by default. To import only safe new records after reviewing the report, use `--apply --skip-problems`. Vector jobs are queued for later synchronization.
+
+For the **systemd installer**, use the `moss` service account and the deployed database path. The full copy/stop/backup/preview/apply/restart sequence is in [Memory Import](docs/MEMORY_IMPORT.md).
+
+**Import is not full restore.** An owner JSON export may be partially imported as memory records and evidence excerpts; Lineage history, portraits, source material bodies, continuity and tombstones require an authoritative [database snapshot restore](docs/OPERATIONS.md#backup-and-restore). Keep memory packages private.
 
 ## Deploy and operate
 
-Place the public backend in `/opt/moss-memory`, then run
-`sudo bash deploy/moss-backend-install.sh`. The installer creates the `moss` account,
-owner token, encrypted model-key storage, backend service and daily/weekly health timers.
-It expects Node/npm and systemd to be installed. It does not install a reverse proxy
-or Qdrant. See [operations](docs/OPERATIONS.md) for model configuration, backup,
-restore, upgrades and optional vector scheduling.
+For Linux/systemd, place the distribution at `/opt/moss-memory`, then run:
 
-## Integrate a host
+```sh
+sudo bash deploy/moss-backend-install.sh
+```
 
-- [API entrypoints](docs/API.md): owner HTTP and MCP contracts.
-- [Host responsibilities](docs/HOST_INTEGRATION.md): session state, context placement and profile routing.
-- [Model runtime](docs/MODEL_RUNTIME.md): provider protocols, route selection and key handling.
-- [Architecture](docs/ARCHITECTURE.md): module ownership and extension boundaries.
-- [Public boundary](docs/public-boundary.md): exact export scope.
-- [Follow-up work](docs/ROADMAP.md): backend/host boundaries for deferred improvements.
+The installer sets up the service account, owner token, encrypted model-key storage, backend service and health timers. It does not install a reverse proxy or Qdrant. See [Operations](docs/OPERATIONS.md) for configuration, backup/restore and upgrades.
 
-The host submits selected conversation signals/batches. ContextWeave does not read an
-entire host chat archive on its own. Small-model processing starts only after
-configuration and an explicit run or runtime enablement. Canonical memory proposals
-remain reviewable; the background writer does not silently commit them.
+## Optional models and vector retrieval
 
-## Release
+The backend works with local SQLite recall alone. To enable model-assisted semantic judgment, embeddings or Qdrant, configure and test the relevant connections explicitly. Model routes and credentials are managed separately; credentials are encrypted at rest.
 
-[中文说明](README.zh-CN.md) · [Configuration](docs/CONFIGURATION.md) · [Tools](docs/TOOLS.md) · [Terminology](docs/TERMINOLOGY.md) · [Local agent policy](docs/AGENT_INTEGRATION.md)
+Read [Model Runtime](docs/MODEL_RUNTIME.md), [Configuration](docs/CONFIGURATION.md) and [Vector & Health](docs/VECTOR_AND_HEALTH.md).
 
-Apache-2.0. Copyright 2026 Phina. Created by Phina in collaboration with Lucien (OpenAI Codex). See AUTHORS.md and THIRD_PARTY_NOTICES.md.
+## Integrating a host
 
-[The Letterbox — share your ContextWeave story privately](https://important-tire-245.notion.site/7660116d784a4f61806d3ad3533207a9). Sharing is voluntary and is not a license condition. Bug reports belong in repository Issues once the repository is published.
+ContextWeave does not automatically read an entire host conversation archive. The host sends selected signals or batches, decides when to request memory, confirms delivery when appropriate, and places returned context into the model prompt.
 
-Source repository: [Lucien-rose/contextweave](https://github.com/Lucien-rose/contextweave). See RELEASE_NOTES.md for release scope. Existing moss_* tool names, MOSS_* variables and service paths are retained for compatibility. Fresh users configure their own identity, policies and providers.
+MCP tool names and compatibility variables such as `moss_*` and `MOSS_*` remain supported.
 
-See [the recall and navigation upgrade](docs/RECALL_UPGRADE.md) for the current
-semantic routing, delivery confirmation and review-plan contracts.
+See [API](docs/API.md), [Host Integration](docs/HOST_INTEGRATION.md), [Agent Integration](docs/AGENT_INTEGRATION.md) and the schema-generated [Tools Reference](docs/TOOLS.md). Live `tools/list` is authoritative after configuration overrides.
+
+## Documentation
+
+| Document | Topic |
+| --- | --- |
+| [Architecture](docs/ARCHITECTURE.md) | System boundaries and module ownership |
+| [API](docs/API.md) | HTTP and MCP endpoints |
+| [Memory Import](docs/MEMORY_IMPORT.md) | Portable JSON packages, preview and apply |
+| [Operations](docs/OPERATIONS.md) | Install, backup, restore and upgrade |
+| [Configuration](docs/CONFIGURATION.md) | Runtime settings |
+| [Model Runtime](docs/MODEL_RUNTIME.md) | Providers, routing and encrypted credentials |
+| [Lineage & Promotion](docs/LINEAGE_AND_PROMOTION.md) | Evolving records and review contracts |
+| [Capsules & Steward](docs/CAPSULES_AND_STEWARD.md) | Continuity and offline processing |
+| [Recall Upgrade](docs/RECALL_UPGRADE.md) | Semantic judgment, delivery and navigation |
+| [Vector & Health](docs/VECTOR_AND_HEALTH.md) | Index generations and health |
+| [Public Boundary](docs/public-boundary.md) | Exact open-source export scope |
+| [Roadmap](docs/ROADMAP.md) | Deferred work |
+
+## Public boundary
+
+This is an independently deployable public backend. It does not include personal memories, prefilled portraits, private frontend or application code, personal Skills, production credentials, deployment secrets or the original private repository history.
+
+See [Public Boundary](docs/public-boundary.md). Current Core version is **1.1.0**; [Release Notes](RELEASE_NOTES.md) document the release scope and [Release Validation](RELEASE_VALIDATION.md) records verification.
+
+## License and credits
+
+Licensed under [Apache-2.0](LICENSE). Copyright © 2026 Phina.
+
+Created by **Phina**, with **Lucien (OpenAI Codex)** as AI engineering collaborator across architecture, implementation, review, testing and documentation. See [AUTHORS.md](AUTHORS.md) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## The Letterbox
+
+If ContextWeave becomes part of something you build, you are welcome to [share its story privately](https://important-tire-245.notion.site/7660116d784a4f61806d3ad3533207a9). Sharing is entirely voluntary, not a license condition. Reproducible bugs and technical issues belong in GitHub Issues.
