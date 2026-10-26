@@ -3,6 +3,7 @@ import { getMemory, writeMemory, audit } from "./database.js";
 import { appendMemoryEvidence } from "./memory-evidence.js";
 import { inheritFamilyBranch } from "./family/groups.js";
 import { recordFamilyChange } from "./family/history.js";
+import { classifyLifecycleMemory } from "./lifecycle-classification.js";
 import { contentHash } from "./memory-record.js";
 import { SEMANTIC_MEMORY_KINDS } from "./memory-kind.js";
 import { transaction } from "./lib/transaction.js";
@@ -201,7 +202,7 @@ export function applyMemoryPackage(db, packageJson, { skipProblems = false } = {
       writeMemory(db, memory);
       appendMemoryEvidence(db, memory.id, refs);
       const saved = getMemory(db, memory.id);
-      inheritFamilyBranch(db, saved, null, { distinct: false });
+      inheritFamilyBranch(db, saved, null, { distinct: classifyLifecycleMemory(saved) === "episode" });
       audit(db, saved.id, "memory-package-import", saved);
       recordFamilyChange(db, { changeId: `import:${saved.id}`, familyKey: saved.family_key,
         operation: "import", after: [saved], sources: saved.evidence });
