@@ -51,7 +51,7 @@ required; otherwise rebuild from canonical memories after selecting a usable mod
 Hosts that store separate assets must back those up independently. Public packages
 contain no production data or secrets.
 
-## Updates and rollback
+## Import portable memory packages\n\nUse `npm run memory:import -- FILE.json --db DATABASE` for a read-only preview, then stop writers, take a verified snapshot and rerun with `--apply`. Existing memories are never overwritten. This is not a full restore; see [Memory Import](MEMORY_IMPORT.md) for JSON format, conflicts and the systemd workflow.\n\n## Updates and rollback
 
 For the standalone public service: stop `moss-backend.service` and its timers and
 any separately scheduled vector/worker jobs; preserve the database/configuration;
