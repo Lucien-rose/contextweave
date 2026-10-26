@@ -111,3 +111,13 @@ test("different IDs with matching content require review rather than being silen
   assert.equal(preview.conflicts, 1);
   assert.match(preview.issues[0].reason, /Possible duplicate/);
 }));
+
+test("parallel episodes in one family retain separate branch keys", () => fixture(({ db }) => {
+  const pkg = { memories: [
+    { id: "episode:one", title: "First day", content: "Event one.", kind: "episode", family_key: "project:launch" },
+    { id: "episode:two", title: "Second day", content: "Event two.", kind: "episode", family_key: "project:launch" },
+  ] };
+  assert.equal(applyMemoryPackage(db, pkg).imported, 2);
+  const branches = db.prepare("SELECT branch_key FROM memory_family_groups WHERE family_key='project:launch'").all();
+  assert.equal(new Set(branches.map(row => row.branch_key)).size, 2);
+}));
