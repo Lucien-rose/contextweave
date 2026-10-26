@@ -172,7 +172,8 @@ export function previewMemoryPackage(db, packageJson) {
           other.title === memory.title && other.content === memory.content
           && other.kind === memory.kind && other.event_date === memory.event_date
           && other.status === memory.status && other.sensitivity === memory.sensitivity)) {
-        outcome = "duplicates";
+        outcome = "conflicts";
+        reason = "Possible duplicate content under another ID; review before importing";
       }
       counts[outcome] += 1;
       if (outcome === "new") rows.push(row);
