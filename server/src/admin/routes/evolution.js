@@ -3,6 +3,7 @@ import { readDelegationPolicy, setDelegationPolicy } from "../../evolution/polic
 import { listChanges, readChange, undoChange } from "../../evolution/changes.js";
 import { applyIntentWithMaintenance } from "../../memory-write.js";
 import { readFamily, groupFamily } from "../../family/service.js";
+import { proposeFamilyGroups } from "../../family/proposal.js";
 import { judgeFamily } from "../../family/jev.js";
 import { deleteMemory } from "../../evolution/deletion.js";
 import { planMemoryRestore, restoreMemory } from "../../evolution/restore.js";
@@ -28,6 +29,9 @@ export function createEvolutionRoutes({ db }) {
     }
     if (path === "/api/evolution/family" && req.method === "PUT") {
       return json(res, 200, groupFamily(db, await readJson(req)));
+    }
+    if (path === "/api/evolution/family/plan" && req.method === "POST") {
+      return json(res, 200, proposeFamilyGroups(db, await readJson(req)));
     }
     if (path === "/api/evolution/family/judge" && req.method === "POST") {
       return json(res, 200, await judgeFamily(db, await readJson(req)));

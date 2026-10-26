@@ -1,3 +1,4 @@
+import { discoverRelations } from "../../relation/discovery.js";
 import { json, readJson } from "../http.js";
 import { listRelations, proposeRelation, readRelation, reviewRelation } from "../../relation/service.js";
 import { relationPaths } from "../../relation/paths.js";
@@ -9,6 +10,9 @@ const OWNER = { context: "intimate", intimacy_mode: "on" };
 export function createRelationRoutes({ db }) {
   return async (req, res, url) => {
     const path = url.pathname;
+    if (path === "/api/relations/discover" && req.method === "POST") {
+      return json(res, 200, discoverRelations(db, { ...await readJson(req), ...OWNER }));
+    }
     if (path === "/api/relations/bundle" && req.method === "POST") {
       return json(res, 200, relationBundle(db, { ...await readJson(req), ...OWNER }));
     }

@@ -92,7 +92,10 @@ export function createGatewayRoutes({ memoryCore, continuityCore, db }) {
     if (input.vector_mode != null && !["off", "observe", "on"].includes(input.vector_mode)) {
       throw badRequest("Invalid vector mode");
     }
+    let hostStatus = null;
     const recalled = await memoryCore.recallForDelivery({
+        recallScope: input.recall_scope, jevMode: input.jev_mode,
+        onRecallStatus: status => { hostStatus = status; },
         deliveryMode: pick(input.delivery_mode, ["immediate", "confirmed"], "immediate"),
         query,
         context,
@@ -119,7 +122,8 @@ export function createGatewayRoutes({ memoryCore, continuityCore, db }) {
         allowRepeatIfStale: Boolean(input.allow_repeat_if_stale),
         vectorMode: input.vector_mode == null ? undefined : input.vector_mode,
       });
-    return json(res, 200, recallResponse(recalled, { query, separateBackground: input.separate_background === true }));
+    return json(res, 200, { ...recallResponse(recalled, { query, separateBackground: input.separate_background === true }),
+      ...(hostStatus ? { host_status: hostStatus } : {}) });
   }
   if (req.method === "POST" && path === "/api/gateway/recall/expand") {
     const input = await readJson(req);

@@ -4,6 +4,7 @@ import { listChanges, readChange, undoChange } from "../evolution/changes.js";
 import { applyIntentWithMaintenance } from "../memory-write.js";
 import { familyReadSchema, familyGroupSchema, familyJudgeSchema } from "../family/contract.js";
 import { readFamily, groupFamily } from "../family/service.js";
+import { proposeFamilyGroups } from "../family/proposal.js";
 import { judgeFamily } from "../family/jev.js";
 import { readDelegationPolicy, setDelegationPolicy } from "../evolution/policy.js";
 import { deleteMemory } from "../evolution/deletion.js";
@@ -27,6 +28,11 @@ export function registerEvolutionTools(server, { db }) {
     inputSchema: familyReadSchema.shape,
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
   }, async (input) => result(readFamily(db, input)));
+  server.registerTool("moss_family_plan", {
+    description: "Build a read-only complete Lineage partition from current revision/sequence judgments and explicit supersession links. Returns before/after groups, evidence, conflicts and fingerprint. Unclear or uncovered group boundaries require review. Apply a reviewed ready plan using moss_family_group; no automatic edits.",
+    inputSchema: familyReadSchema.shape,
+    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+  }, async input => result(proposeFamilyGroups(db, input)));
   server.registerTool("moss_family_group", {
     description: "Regroup an inspected Lineage using a complete partition of its member IDs and its current fingerprint. Put revisions of one fact/event together; keep separate events in different groups. This changes duplicate selection only, never content, status, supersession or evidence. Host may curate groups under the user's existing memory-management instruction; no extra confirmation flag is needed.",
     inputSchema: familyGroupSchema.shape,

@@ -1,16 +1,21 @@
 # Follow-up work
 
-These items are deferred improvements, not requirements to operate version 1.0.
+These items are deferred improvements, not requirements to operate the current release.
 No release date is promised.
 
 | Area | Backend responsibility | Host responsibility |
 | --- | --- | --- |
 | Recall Ledger | Optional body-free route history and delivery outcomes | Session association and visualization |
-| Scoped repetition control | Cooldown keyed by host surface/session after confirmed delivery | Stable surface/session identifiers and delivery acknowledgment |
+| Background repetition policy | Future background-specific cooldown policy | Stable surface identifiers and context placement |
 | Recall evaluation | Fixed synthetic relevance cases, ranking metrics and replay through the production pipeline | Optional useful/wrong/missed feedback |
-| Summary scheduling | Queue missing or stale long-memory summaries under owner policy | Configure an optional summary model |
-| Relationship suggestions | Atlas/Lineage candidates with evidence; review before structural changes | Review UI and acceptance |
+| Summary scheduling (optional) | Existing explicit backfill remains available; automatic scheduling is deferred because long T0 recall now opens relevant windows | Configure a summary model if desired |
+| Relationship curation | Extend bounded Atlas structural leads and Lineage plans after evaluation | Review UI and acceptance |
 | Steward coordination | Process bounded batches and return durable receipts | Conversation cursors, batch selection and offline scheduling |
 
 Automatic relation creation, semantic merges and portrait promotion are not
 implied by these plans. Source evidence and canonical write authority stay explicit.
+
+Delivered in this upgrade: ordinary semantic recall with local fallback, confirmed
+surface cooldown, relevant T0 windows, independent judgment routes, Atlas discovery
+and Lineage review plans. See [contracts](RECALL_UPGRADE.md). Evaluation-corpus work
+remains deferred; synthetic regressions are not retrieval-quality benchmarks.

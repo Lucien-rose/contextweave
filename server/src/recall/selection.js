@@ -31,11 +31,12 @@ export function selectRecallCandidates(repository, entries, traceCandidates, run
   scored = applyAnswerAuthority(assignRecallSemantics(scored), authority);
   annotateTraceSemantics(traceCandidates, scored);
   scored = scored.filter((entry) => entry.recallQualified)
-    .sort((a, b) => compareTiered(a, b, compareWithinTier));
+    .sort((a, b) => compareTiered(a, b, (left, right) =>
+      (right.semanticPriority || 0) - (left.semanticPriority || 0) || compareWithinTier(left, right)));
   const ranks = new Map(scored.map((entry, index) => [entry.memory.id, index + 1]));
   for (const candidate of traceCandidates) candidate.rank_before_budget = ranks.get(candidate.id) || null;
   const queryContext = runtime.queryContext;
-  const present = (entry, memberships = []) => progressivePresentation(entry, summarize(entry.memory, entry.score, {
+  const present = (entry, memberships = []) => progressivePresentation({ ...entry, readingQuery: query, readingEnvelope: runtime.envelope }, summarize(entry.memory, entry.score, {
       matchReason: entry.matchReason, recommendedMode: recommendedMode(entry.memory, query),
       alreadyRecentlyRead: false, arcMemberships: memberships,
       entities: runtime.entityMatches.get(entry.memory.id) || [],

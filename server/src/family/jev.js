@@ -16,7 +16,7 @@ const RELATIONS = { revision: "Same fact/state/event, restated or updated.",
 const SUPPORT = { "same-subject-state": "Both snippets establish the same fact, state or event being updated.",
   "distinct-events": "Both snippets establish distinct events or independent facts.", none: "The supplied snippets are insufficient." };
 
-export async function judgeFamily(db, input, { config = jevConfig(), fetchImpl } = {}) {
+export async function judgeFamily(db, input, { config = jevConfig({ task: "lineage_judge" }), fetchImpl } = {}) {
   const request = parseContract(familyJudgeSchema, input);
   const snapshot = familySnapshot(db, request.family_key);
   const family = familyMemories(db, snapshot);

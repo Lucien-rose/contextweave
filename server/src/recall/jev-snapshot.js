@@ -59,8 +59,8 @@ function snapshotRow(row, runtime, trace) {
     family_key: memory.family_key, event_date: memory.event_date,
     protected_direct: entry.rawDirectEvidence,
     context_check: memory.sensitivity === "intimate" && runtime.context === "private" && ["model", "proactive"].includes(runtime.intimacyMode),
-    allowed_uses: [background ? "background" : "supporting", "omit"],
+    allowed_uses: background ? ["background", "omit"] : ["supporting", "background", "omit"],
     snippet: { id: snippetId, representation: view, start: window.chunk?.start || 0,
       end: window.chunk?.end || 0, truncated: window.truncated, text: window.content } };
-  return { candidate, entry, sources, baselineSelected: Boolean(old?.final), baselineReason: old?.reason || null };
+  return { candidate, entry, formalAllowed: row.formalAllowed, sources, baselineSelected: Boolean(old?.final), baselineReason: old?.reason || null };
 }

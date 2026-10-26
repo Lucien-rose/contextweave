@@ -39,7 +39,8 @@ export function evaluateCandidates(runtime, {
     if (captureCandidates && (allowRepeat || !isRecentlyRead(memory, recent))) {
       const processing = admissionDecision(memory, { query, context, intimacyMode,
         allowedStatuses: runtime.recallPlan.candidate_statuses, modelInspection: true });
-      if (processing.allowed) observed.push({
+      if (processing.allowed && !historicalSuppressionReason(runtime.recallPlan, memory, runtime.historicalFamilyKeys, { contextualMatch: signals.evidence.contextual, canonicalMatchReason: matchReason(memory, query) })) observed.push({
+        formalAllowed: signals.admission.allowed && !shouldSuppressPrivateTechnicalWeakOnly(memory, { query, context, intimacyMode, admission: signals.admission, rawEvidence: signals.rawEvidence, technicalIntent: runtime.technicalIntent }),
         entry: admittedCandidate(memory, runtime, signals, base, { query, allowRepeatIfStale }).entry,
       });
     }
@@ -166,6 +167,7 @@ function scoredEntry(memory, signals, scoring, {
     matchReason: scoring.reason,
     situationEvidence,
     vectorEvidence: signals.vectorEvidence,
+    vectorChunk: signals.vectorCandidate,
     associationQualified: signals.associationQualified,
     associationEvidence: signals.associationEvidence,
     associationRank: Number(signals.associationCandidate?.association_rank) || null,

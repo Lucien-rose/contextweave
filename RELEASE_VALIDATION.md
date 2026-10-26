@@ -1,58 +1,23 @@
-# ContextWeave Core 1.0.0 validation
+# Upgrade validation
 
-Validated on 2026-10-25 with Node.js 24.22.1 and npm 11.9.0.
+Validated 2026-10-26 with Node.js 24.22.1 / npm 11.9.0 using synthetic data.
 
-- Public test suite: 14 passed, 0 failed. Covers authenticated HTTP/MCP operation,
-  SQLite backup/restore, recall, portrait processing and configurable defaults.
-- Architecture check: 203 source modules, no detected local import cycles;
-  module/function size, duplicate function and version checks passed.
-- MCP reference: 60 tools, generated through a real tools/list exchange.
-  Change Record max_chars accepts 12000–50000; 5000 is rejected and omitting
-  the field succeeds. Deployment overrides appear in the live schemas.
-- Synthetic recall demonstration passed without paid providers.
-- Fresh archive extraction: locked dependency installation, public tests,
-  architecture/boundary checks and database/key initialization passed.
-- Linux installer passed bash syntax validation. systemd deployment was not
-  executed in this validation environment.
-- Release review checked known private identifiers, production profiles,
-  personal Skills, database artifacts and repository history. Only approved
-  author credits and the public contact form are included.
+- Public suite: 21 tests, including real authenticated HTTP/MCP status separation,
+  snapshot restore, scope confirmation, semantic omission/fallback, background
+  admission, exact long-text windows, model-route isolation and navigation plans.
+- Architecture: 209 source modules; no detected local import cycles. Existing
+  module/function size, duplicate-body and version-authority checks pass.
+- MCP reference: 62 tools, generated from real tools/list. New tools are
+  moss_relation_discover and moss_family_plan. Legacy names remain compatible.
+- Public boundary scan passes. No personal Skills, private application assets,
+  production database, provider key or private parameter preset is included.
+- Shared changes were applied to both public Core and the private assembly;
+  private deployment presets are not copied into this package.
 
-The document generator uses an actual in-memory SQLite database; it does not
-leave a database file in the release tree. The release boundary check recognizes
-SQLite files even when they have no database extension.
+Synthetic tests exercise provider outcomes without paid external requests. Real
+provider/account availability, the live VPS and host UI remain deployment
+acceptance work. This package does not deploy or update a host frontend.
 
-This is source for a separate public deployment, not an update installer for a
-private application. Existing moss_* tools, MOSS_* variables and service paths
-remain compatibility identifiers. Personal configuration and original repository
-history have not been copied into this archive.
-
-Validation preceded GitHub publication. No registry package or live deployment
-was published by these checks. No live
-paid-provider or remote Qdrant migration was exercised. Synthetic checks do not
-certify arbitrary provider behavior or replace owner acceptance on the intended
-deployment platform.
-
-## Public naming and final closure
-
-Public tool descriptions, schema help, model instructions, errors and generated
-Notion review text use the public names. API identifiers, persisted field names,
-routing enums and service paths remain compatible. The 60-tool contract was
-compared before/after with descriptions excluded: no structural change. Legacy
-display names remain only in the explicit terminology compatibility table.
-
-Final closure on 2026-10-25:
-
-- Shared serialized-response counting replaces repeated assignments in Context Seed
-  and delivery responses, including the legacy v2 adapter. Exact counts were checked
-  across digit boundaries and confirmed-delivery receipts.
-- Portrait promotion coverage uses CW_TIMEZONE rather than a fixed UTC offset;
-  UTC and Asia/Taipei date boundaries were checked with synthetic events.
-- Stable documentation names replace internal version-number filenames. Model
-  connection, Index Generation and initialization instructions match the public backend.
-- Deferred recall evaluation, relationship suggestions, Recall Ledger and automatic
-  summary scheduling are listed in docs/ROADMAP.md with host/backend ownership.
-- Tools were regenerated from the live 60-tool contract; local Markdown links resolve.
-- The final source archive was extracted separately; npm ci installed 93 locked
-  packages, all 14 tests and architecture/boundary/demo checks passed, and fresh
-  database/key initialization succeeded. systemd and real providers remain untested.
+Upgrade rehearsal from the previous public release passed: canonical record,
+unchanged tables, added delivery scope, pending vector jobs, snapshot restore,
+recall and previous-release reopening.

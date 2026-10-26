@@ -1,3 +1,19 @@
+# ContextWeave 1.1.0
+
+Long T0 recall now opens a relevant original-text window. Configured Decision Models
+can select ordinary recall candidates with local fallback, and soft-gated useful
+material can use the existing bounded background lane. Host-only status explains
+fallback without entering the memory text.
+
+This release also adds confirmed per-surface cooldown, independent recall/portrait/
+Lineage judgment routes, read-only Atlas relationship leads, and reviewable Lineage
+partition plans. Existing MCP names and owner endpoints remain compatible.
+
+Read [upgrade contracts](docs/RECALL_UPGRADE.md) before host integration. A configured
+legacy Decision Model now defaults to active ordinary recall; set `CW_JEV_MODE=off`
+to retain prior model-free recall. No new provider is selected, no memory is
+automatically rewritten, and old vectors need no forced rebuild.
+
 # ContextWeave Core 1.0.0
 
 The first public source distribution: a self-hosted, single-owner memory backend.

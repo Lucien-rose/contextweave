@@ -13,7 +13,7 @@ const responseSchema = z.object({ answers: z.record(z.string(), answerSchema), m
     cost: z.number().nonnegative().optional() }) });
 
 export function jevConfig(overrides = {}) {
-  const connection = resolveModelRoute("jev");
+  const connection = resolveModelRoute(overrides.task || "jev") || resolveModelRoute("jev");
   const path = process.env.MOSS_JEV_ENV_FILE || "/etc/moss-memory/jev.env";
   const value = (key, fallback = "") => vectorEnvValueFrom(path, key, fallback);
   const config = {

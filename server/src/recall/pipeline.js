@@ -1,3 +1,4 @@
+import { applySemanticDecisions } from "./semantic.js";
 import { defaults } from "../defaults.js";
 import { selectRecallCandidates } from "./selection.js";
 import { buildRecallResult, buildSuppressedRecallResult } from "./result.js";
@@ -83,6 +84,9 @@ export function recallMemoriesWithTrace(repository, {
   recordRecall = true,
   preparedQuery = null,
   captureCandidates = null,
+  captureOnly = false,
+  cooledMemoryHashes = new Map(),
+  semanticDecisions = null,
   shadowMode = "default",
   at = new Date(),
 } = {}) {
@@ -108,19 +112,40 @@ export function recallMemoriesWithTrace(repository, {
   });
   markPhase("candidate_preparation");
   let { scored, traceCandidates, observed } = evaluateCandidates(runtime, {
-    query, context, intimacyMode, includeArchived, allowRepeat, allowRepeatIfStale, recent, captureCandidates: Boolean(captureCandidates),
+    query, context, intimacyMode, includeArchived, allowRepeat, allowRepeatIfStale, recent, captureCandidates: Boolean(captureCandidates || semanticDecisions),
   });
+  const cooled = entry => !allowRepeat && cooledMemoryHashes.get(entry.memory.id) === entry.memory.content_hash;
+  scored = scored.filter(entry => !cooled(entry));
+  observed = observed.filter(({ entry }) => !cooled(entry));
+  for (const candidate of traceCandidates) if (!allowRepeat && cooledMemoryHashes.has(candidate.id)
+    && runtime.loadedById.get(candidate.id)?.content_hash === cooledMemoryHashes.get(candidate.id)) {
+    candidate.admission = "suppress"; candidate.reason = "surface-cooldown";
+  }
   if (captureCandidates) captureCandidates({ runtime, entries: observed });
 
+  if (captureOnly) return { memories: [], background_memories: [], trace: { candidates: traceCandidates } };
   markPhase("candidate_scoring");
-  const contextualTail = applyContextualTail(scored, traceCandidates);
+  const localFallback = !semanticDecisions || scored.some(entry => {
+    const decision = semanticDecisions.get(entry.memory.id);
+    return !entry.rawDirectEvidence && (!decision || decision.relevance === "uncertain" || decision.context_fit === "uncertain");
+  });
+  const contextualTail = localFallback ? applyContextualTail(scored, traceCandidates) : { scored, floor: null };
   scored = contextualTail.scored;
   const contextualRelevanceFloor = contextualTail.floor;
-  const relativeTail = applyRelativeTail(scored, traceCandidates);
+  const relativeTail = localFallback ? applyRelativeTail(scored, traceCandidates) : { scored, floor: null };
   scored = relativeTail.scored;
   const relativeRelevanceFloor = relativeTail.floor;
+  if (semanticDecisions) {
+    scored = applySemanticDecisions(observed, scored, semanticDecisions);
+    const chosen = new Map(scored.filter(entry => entry.semanticDecision).map(entry => [entry.memory.id, entry]));
+    for (const candidate of traceCandidates) if (chosen.has(candidate.id)) {
+      candidate.local_admission = candidate.admission; candidate.local_reason = candidate.reason;
+      candidate.admission = "admit";
+      candidate.reason = chosen.get(candidate.id).semanticBackground ? "jev-background" : "jev-supporting";
+    }
+  }
   scored.sort(compareScored);
-  scored = applySituationRanking(scored, traceCandidates, runtime);
+  if (!semanticDecisions) scored = applySituationRanking(scored, traceCandidates, runtime);
   const { memories, backgroundMemories, selected, budget, background, verifyPlan } = selectRecallCandidates(repository,
     scored, traceCandidates, runtime, { query, context, intimacyMode, familyPolicy, limit,
       contextBudgetChars, backgroundLimit, backgroundBudgetChars, totalBudgetChars });

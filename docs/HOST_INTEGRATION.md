@@ -129,3 +129,7 @@ source cursors, offline triggers and Handoff composition stay with the host.
 Steward shares the existing review inbox and writes proposals only.
 
 See [vector migration and health inspection](VECTOR_AND_HEALTH.md) for the backend migration APIs, timers, reports and host boundaries.
+
+See [recall and navigation upgrade](RECALL_UPGRADE.md) for semantic/local routing,
+host-only status, confirmed surface cooldown, Atlas leads and reviewable Lineage
+partitions. These reuse the existing domain services and host delivery contract.

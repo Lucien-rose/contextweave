@@ -10,6 +10,7 @@ import { ensureRelationSchema } from "./relation/schema.js";
 import { ensureFamilySchema } from "./family/schema.js";
 import { migrateFamilyHistory } from "./family/history.js";
 import { ensureStarfieldSchema } from "./starfield/schema.js";
+import { ensureRecallCooldown } from "./recall/cooldown.js";
 import { ensureRecallSettings } from "./recall/settings.js";
 import { ensurePortraitSchema } from "./portrait/schema.js";
 import { ensureSqliteColumn } from "./lib/sqlite.js";
@@ -19,6 +20,7 @@ import { declaredPolicyDefaults, contentHash } from "./memory-record.js";
 
 export function migrateDatabase(db) {
   ensureDatabaseSchema(db);
+  ensureRecallCooldown(db);
   ensureVectorDeploymentSchema(db);
   ensureHealthSchema(db);
 

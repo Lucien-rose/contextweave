@@ -37,3 +37,7 @@ Keep concurrency, evidence and deletion checks that protect stored data. Do not
 turn a provider failure into a canonical rewrite or hide unexpected maintenance
 errors. Avoid a generic plugin registry or dependency container for a fixed set
 of services. See `CONTRIBUTING.md` for validation and change boundaries.
+
+See [recall and navigation upgrade](RECALL_UPGRADE.md) for semantic/local routing,
+host-only status, confirmed surface cooldown, Atlas leads and reviewable Lineage
+partitions. These reuse the existing domain services and host delivery contract.

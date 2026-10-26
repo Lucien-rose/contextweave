@@ -30,7 +30,7 @@ export function jevIdentity(config) {
     endpoint: config.connection?.protocol || "/api/alpha/decisions", version: JEV_PROMPT_VERSION, rules: RULES, criteria: CRITERIA })).digest("hex");
 }
 
-export async function judgeJevCandidates(snapshot, { config = jevConfig(), fetchImpl } = {}) {
+export async function judgeJevCandidates(snapshot, { config = jevConfig(), fetchImpl, requireComplete = false } = {}) {
   const { candidates } = snapshot.payload;
   const questions = {};
   candidates.forEach((candidate, index) => {
@@ -41,13 +41,14 @@ export async function judgeJevCandidates(snapshot, { config = jevConfig(), fetch
     }
   });
   const result = await requestJevDecisions({ state: { ...snapshot.payload, rules: RULES }, questions }, { config, fetchImpl });
+  if (requireComplete && Object.keys(questions).some(key => !result.answers[key])) throw new Error("jev-incomplete-response");
   const decisions = candidates.flatMap((candidate, index) => {
     const answers = Object.fromEntries(Object.keys(CRITERIA).map((field) => [field, result.answers[`c${index}_${field}`]]));
     if (Object.entries(answers).some(([field, answer]) => !answer && (field !== "context_fit" || candidate.context_check))) return [];
     const relevance = answers.support_ref.choice === "snippet" ? answers.relevance.choice
       : answers.relevance.choice === "useful" ? "uncertain" : answers.relevance.choice;
     return [{ candidate_id: candidate.candidate_id, context_fit: answers.context_fit?.choice || "appropriate", relevance,
-      use: relevance === "useful" ? candidate.allowed_uses[0] : "omit", priority: Number(answers.priority.choice),
+      use: relevance === "useful" ? answers.reason_code.choice === "background-only" ? "background" : candidate.allowed_uses[0] : "omit", priority: Number(answers.priority.choice),
       reason_code: answers.reason_code.choice,
       support_refs: answers.support_ref.choice === "snippet" ? [candidate.snippet.id] : [],
       support_refs_source: "input-snippet-typed-choice", judgments: Object.fromEntries(
