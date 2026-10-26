@@ -84,3 +84,19 @@ test("owner exports are explicitly partial imports and CLI previews before apply
   assert.equal(applied.imported, 1);
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM memories").get().n, 1);
 }));
+
+test("same ID with different sensitivity or new evidence is a conflict, not a silent duplicate", () => fixture(({ db }) => {
+  const original = { memories: [{ id: "privacy:test", title: "Note", content: "A note.", sensitivity: "private" }] };
+  applyMemoryPackage(db, original);
+  const changed = { memories: [{ id: "privacy:test", title: "Note", content: "A note.", sensitivity: "personal" }] };
+  assert.equal(previewMemoryPackage(db, changed).conflicts, 1);
+  const evidence = { memories: [{ ...original.memories[0],
+    source_refs: [{ source_type: "conversation", source_id: "new:message", excerpt: "A note." }] }] };
+  assert.equal(previewMemoryPackage(db, evidence).conflicts, 1);
+}));
+
+test("invalid calendar dates are rejected during preview", () => fixture(({ db }) => {
+  const plan = previewMemoryPackage(db, { memories: [{ content: "Calendar", event_date: "2026-02-31" }] });
+  assert.equal(plan.invalid, 1);
+  assert.equal(plan.new, 0);
+}));
