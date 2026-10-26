@@ -48,7 +48,7 @@ function date(value, field) {
   if (value == null || value === "") return null;
   const text = string(value, field, 40, true);
   if (field === "event_date") {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(text) || Number.isNaN(Date.parse(text))) throw new TypeError("Invalid event_date");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(text) || Number.isNaN(Date.parse(text)) || new Date(`${text}T00:00:00Z`).toISOString().slice(0, 10) !== text) throw new TypeError("Invalid event_date");
   } else if (Number.isNaN(Date.parse(text))) throw new TypeError(`Invalid ${field}`);
   return text;
 }
@@ -136,6 +136,14 @@ export function parseMemoryPackage(packageJson) {
   return { items, ownerExport: Boolean(packageJson.memory_state || packageJson.continuity) };
 }
 
+function sameRecord(left, right) {
+  const fields = ["title", "content", "kind", "event_date", "status", "sensitivity",
+    "importance", "layer", "family_key", "mentionability", "load_policy",
+    "standing_opt_in", "scope", "activation_policy", "safe_projection",
+    "recall_summary", "public_projection", "tags", "triggers", "ambient_triggers"];
+  return fields.every(field => JSON.stringify(left[field] ?? null) === JSON.stringify(right[field] ?? null));
+}
+
 export function previewMemoryPackage(db, packageJson) {
   const { items, ownerExport } = parseMemoryPackage(packageJson);
   const rows = [];
@@ -143,7 +151,7 @@ export function previewMemoryPackage(db, packageJson) {
   const counts = { total: items.length, new: 0, duplicates: 0, conflicts: 0, invalid: 0 };
   const seenIds = new Map();
   const seenContent = new Set();
-  const byHash = db.prepare("SELECT id, title, content, kind, event_date FROM memories WHERE content_hash = ?");
+  const byHash = db.prepare("SELECT id, title, content, kind, event_date, status, sensitivity FROM memories WHERE content_hash = ?");
   const deleted = db.prepare("SELECT 1 FROM memory_deletions WHERE memory_id = ?");
   for (const [index, input] of items.entries()) {
     try {
@@ -153,24 +161,24 @@ export function previewMemoryPackage(db, packageJson) {
       let outcome = "new", reason = null;
       if (deleted.get(memory.id)) { outcome = "conflicts"; reason = "deleted ID cannot be reused"; }
       else if (existing) {
-        if (existing.title === memory.title && existing.content === memory.content
-          && existing.kind === memory.kind && existing.event_date === memory.event_date
-          && existing.status === memory.status) outcome = "duplicates";
+        if (sameRecord(existing, memory) && row.refs.every(ref => existing.evidence.some(saved =>
+          saved.source_type === ref.source_type && saved.source_id === ref.source_id))) outcome = "duplicates";
         else { outcome = "conflicts"; reason = "ID already belongs to a different memory"; }
       } else if (seenIds.has(memory.id)) {
-        if (seenIds.get(memory.id) === fingerprint) outcome = "duplicates";
+        if (sameRecord(seenIds.get(memory.id), memory)) outcome = "duplicates";
         else { outcome = "conflicts"; reason = "ID collision within package"; }
-      } else if (seenContent.has(fingerprint)
+      } else if (seenContent.has(JSON.stringify([fingerprint, memory.status, memory.sensitivity]))
         || byHash.all(contentHash(memory.content)).some(other =>
           other.title === memory.title && other.content === memory.content
-          && other.kind === memory.kind && other.event_date === memory.event_date)) {
+          && other.kind === memory.kind && other.event_date === memory.event_date
+          && other.status === memory.status && other.sensitivity === memory.sensitivity)) {
         outcome = "duplicates";
       }
       counts[outcome] += 1;
       if (outcome === "new") rows.push(row);
       if (reason && issues.length < 100) issues.push({ index, id: memory.id, type: outcome, reason });
-      seenIds.set(memory.id, fingerprint);
-      seenContent.add(fingerprint);
+      if (!seenIds.has(memory.id)) seenIds.set(memory.id, memory);
+      seenContent.add(JSON.stringify([fingerprint, memory.status, memory.sensitivity]));
     } catch (error) {
       counts.invalid += 1;
       if (issues.length < 100) issues.push({ index, type: "invalid", reason: error.message });
