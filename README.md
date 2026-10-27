@@ -82,6 +82,20 @@ This is a retrieval benchmark, not a claim about final answer generation, privac
 
 ## Quick start
 
+With Docker Compose (no host Node.js needed):
+
+```sh
+git clone https://github.com/Lucien-rose/contextweave.git
+cd contextweave
+mkdir -p imports
+docker compose up --build -d --wait
+docker compose exec contextweave moss doctor
+```
+
+The first start initializes persistent storage and separate runtime/admin credentials. Follow the [Docker guide](docs/DOCKER.md) to retrieve tokens, import your JSON package and run the complete host example.
+
+For a native installation:
+
 Requires **Node.js 24+** and npm. No paid model or Qdrant installation is needed for basic recall.
 
 ```sh
