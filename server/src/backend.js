@@ -14,23 +14,33 @@ import { startMaintenance } from "./maintenance.js";
 import { json } from "./admin/http.js";
 import { VERSION } from "./version.js";
 
-export function createBackend({ databasePath, token = process.env.MOSS_ADMIN_TOKEN } = {}) {
-  if (!token || token.length < 24) throw new Error("MOSS_ADMIN_TOKEN must contain at least 24 characters");
-  const expected = Buffer.from(token);
+export function createBackend({
+  databasePath,
+  token = process.env.MOSS_ADMIN_TOKEN,
+  adminToken = token,
+  runtimeToken = process.env.MOSS_RUNTIME_TOKEN || adminToken,
+} = {}) {
+  validateToken(adminToken, "MOSS_ADMIN_TOKEN");
+  validateToken(runtimeToken, "MOSS_RUNTIME_TOKEN");
   const { db } = openDatabase(databasePath);
   const stop = startMaintenance(db);
   const app = express();
   const router = createMemoryApiRouter({ db, memoryCore: createMemoryCore(db), continuityCore: createContinuityCore(db) });
   app.get("/health", (_req, res) => res.json({ ok: true, version: VERSION }));
   app.use((req, res, next) => {
-    const supplied = Buffer.from((req.headers.authorization || "").replace(/^Bearer /, ""));
-    if (!req.headers.authorization?.startsWith("Bearer ") || supplied.length !== expected.length
-      || !timingSafeEqual(supplied, expected)) return json(res, 401, { error: "Unauthorized" });
+    const accepted = req.path === "/mcp/runtime" ? [runtimeToken, adminToken] : [adminToken];
+    if (!authorized(req, accepted)) return json(res, 401, { error: "Unauthorized" });
     res.setHeader("Cache-Control", "no-store");
     next();
   });
-  app.post("/mcp", express.json({ limit: "256kb" }), async (req, res) => {
-    const server = createMemoryServer(db);
+  const mcp = (surface, compatibility = false) => async (req, res) => {
+    if (compatibility) {
+      res.setHeader("Deprecation", "true");
+      res.setHeader("Warning", '299 ContextWeave "The combined /mcp surface is deprecated; select /mcp/runtime or /mcp/admin"');
+      res.setHeader("Link", '</mcp/runtime>; rel="successor-version", </mcp/admin>; rel="alternate"');
+    }
+    res.setHeader("X-ContextWeave-MCP-Surface", surface);
+    const server = createMemoryServer(db, { surface });
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
     res.on("close", () => { void transport.close(); void server.close(); });
     try {
@@ -40,7 +50,11 @@ export function createBackend({ databasePath, token = process.env.MOSS_ADMIN_TOK
       console.error("MCP request failed", error);
       if (!res.headersSent) json(res, 500, { error: "Internal server error" });
     }
-  });
+  };
+  const mcpJson = express.json({ limit: "256kb" });
+  app.post("/mcp/runtime", mcpJson, mcp("runtime"));
+  app.post("/mcp/admin", mcpJson, mcp("admin"));
+  app.post("/mcp", mcpJson, mcp("compat", true));
   app.use(async (req, res) => {
     try {
       await router(req, res, new URL(req.url, "http://localhost"));
@@ -55,10 +69,14 @@ export function createBackend({ databasePath, token = process.env.MOSS_ADMIN_TOK
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   process.env.MOSS_CONFIG_DIR ||= resolve("data/config");
-  if (process.argv.includes("--stdio")) {
+  const stdioSurface = process.argv.includes("--stdio-runtime") ? "runtime"
+    : process.argv.includes("--stdio-admin") ? "admin"
+      : process.argv.includes("--stdio") ? "compat" : null;
+  if (stdioSurface) {
     const { db } = openDatabase();
     const stop = startMaintenance(db);
-    const server = createMemoryServer(db);
+    if (stdioSurface === "compat") console.error("ContextWeave: --stdio uses the deprecated combined MCP surface; prefer --stdio-runtime or --stdio-admin");
+    const server = createMemoryServer(db, { surface: stdioSurface });
     await server.connect(new StdioServerTransport());
     server.server.onclose = async () => { await stop(); db.close(); };
   } else {
@@ -69,4 +87,17 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal,
       () => server.close(async () => { await backend.close(); process.exit(0); }));
   }
+}
+
+function validateToken(value, name) {
+  if (!value || value.length < 24) throw new Error(`${name} must contain at least 24 characters`);
+}
+
+function authorized(req, tokens) {
+  if (!req.headers.authorization?.startsWith("Bearer ")) return false;
+  const supplied = Buffer.from(req.headers.authorization.slice("Bearer ".length));
+  return [...new Set(tokens)].some(token => {
+    const expected = Buffer.from(token);
+    return supplied.length === expected.length && timingSafeEqual(supplied, expected);
+  });
 }
