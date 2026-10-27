@@ -1,0 +1,15 @@
+{
+  "identity_cues": [
+    "Mira", "Nora", "Tariq", "Elena", "Jonas", "Priya", "Camille", "Soren",
+    "Cobalt", "Orion", "Juniper", "Harbor", "Kestrel", "Lantern"
+  ],
+  "generic_query_terms": [],
+  "context_evidence_phrases": [],
+  "query_aliases": {},
+  "semantic_groups": [],
+  "fuzzy_cues": [],
+  "classification_anchors": [],
+  "classification_core_terms": [],
+  "classification_priority_anchors": [],
+  "birthday_title": "Birthday"
+}

@@ -35,6 +35,7 @@
     "start": "node server/src/backend.js --http",
     "start:stdio": "node server/src/backend.js --stdio",
     "test": "MOSS_VECTOR_ENV_FILE=/dev/null MOSS_JEV_ENV_FILE=/dev/null MOSS_JEV_API_KEY= node --test server/test/public-*.test.js",
+    "evaluate:product-core": "MOSS_RECALL_PROFILE_FILE=evaluation/product-recall-profile.json MOSS_VECTOR_ENV_FILE=/dev/null MOSS_JEV_ENV_FILE=/dev/null MOSS_JEV_API_KEY= node scripts/evaluate-product-effect.js",
     "demo": "node scripts/run-public-demo.js",
     "health:check": "node scripts/health-check.js",
     "vector:sync": "node scripts/sync-vector-index.js",
