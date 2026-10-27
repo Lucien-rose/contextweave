@@ -32,3 +32,5 @@ No production scoring rules were changed based on this pilot. No paid calls are 
 `scripts/run-vps-product-benchmark.sh` is the VPS-only companion to the local diagnostic. Run it as root from a disposable checkout. It reuses the host's encrypted model routes but creates a uniquely prefixed Qdrant collection, uses an in-memory SQLite database, copies the Markdown and JSON reports to `/root`, and deletes the benchmark collection before exiting. It refuses to delete any Qdrant collection that does not match the benchmark-only naming rule.
 
 The provider-backed report compares the configured ContextWeave retrieval pipeline with FTS5, neural-vector-only and ordinary FTS+vector hybrid baselines on the same frozen synthetic corpus. It still does not score final answer generation, privacy policy behavior or production data.
+
+The first successful provider-backed run is recorded in [PROVIDER_BENCHMARK_2026-10-27.md](PROVIDER_BENCHMARK_2026-10-27.md). It is an initial validation run. The acceptance plan requires two more clean provider runs before the aggregate is called the first formal benchmark.
