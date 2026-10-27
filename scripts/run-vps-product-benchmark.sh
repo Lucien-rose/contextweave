@@ -44,13 +44,15 @@ cleanup() {
 trap cleanup EXIT
 
 awk -v prefix="cw_eval_${stamp,,}" '
-  BEGIN { replaced=0 }
+  BEGIN { replaced=0; embed_batch=0 }
   /^MOSS_QDRANT_COLLECTION_PREFIX=/ { print "MOSS_QDRANT_COLLECTION_PREFIX=" prefix; replaced=1; next }
   /^MOSS_RECALL_VECTOR_MODE=/ { print "MOSS_RECALL_VECTOR_MODE=on"; vector=1; next }
+  /^MOSS_VECTOR_EMBED_BATCH=/ { print "MOSS_VECTOR_EMBED_BATCH=1"; embed_batch=1; next }
   { print }
   END {
     if (!replaced) print "MOSS_QDRANT_COLLECTION_PREFIX=" prefix
     if (!vector) print "MOSS_RECALL_VECTOR_MODE=on"
+    if (!embed_batch) print "MOSS_VECTOR_EMBED_BATCH=1"
   }
 ' /etc/moss-memory/vector.env > "$vector_env"
 chmod 600 "$vector_env"
