@@ -463,7 +463,7 @@ export function registerCoreTools(server, { core, continuity }) {
     },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
   }, async ({ draft_id }) => {
-    const { memory: active, family_judgment } = await core.commitWithLineage(draft_id);
+    const { memory: active, family_judgment } = await core.commitWithFamily(draft_id);
     if (!active) return errorResult(`Active draft not found: ${draft_id}`);
     return result({ memory: stripInternal(active), committed: true, family_judgment });
   });

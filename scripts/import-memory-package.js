@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 import { readFileSync, statSync } from "node:fs";
-import { resolve } from "node:path";
+import { resolveImportPath } from "./import-path.js";
 import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 import { openDatabase, resolveDatabasePath } from "../server/src/database.js";
 import { applyMemoryPackage, previewMemoryPackage } from "../server/src/memory-package.js";
 
 const MAX_BYTES = 20 * 1024 * 1024;
-const HELP = `Usage: node scripts/import-memory-package.js FILE.json [--db DATABASE] [--dry-run | --apply] [--skip-problems]
+const HELP = `Usage: node scripts/import-memory-package.js [FILE.json] [--db DATABASE] [--dry-run | --apply] [--skip-problems]
+
+Paths may be absolute, relative, file: URLs, or relative to MOSS_IMPORT_DIR.
+Without FILE, exactly one JSON file must exist in the working/import directories.
 
 Default is read-only dry-run. --apply inserts only new records in one SQLite transaction.
 Existing memories are never overwritten. --skip-problems explicitly skips conflicts/invalid entries.
@@ -27,13 +30,12 @@ export function parseArgs(argv) {
     } else if (!item.startsWith("-") && !args.file) args.file = item;
     else throw new TypeError(`Unknown argument: ${item}`);
   }
-  if (!args.file) throw new TypeError(HELP);
   if (args.skipProblems && !args.apply) throw new TypeError("--skip-problems requires --apply");
   return args;
 }
 
 export function importFile({ file, dbPath, apply = false, skipProblems = false }) {
-  const path = resolve(file);
+  const path = resolveImportPath(file);
   if (statSync(path).size > MAX_BYTES) throw new TypeError("Package exceeds 20 MiB limit");
   const packageJson = JSON.parse(readFileSync(path, "utf8"));
   const target = resolveDatabasePath(dbPath);
@@ -42,7 +44,7 @@ export function importFile({ file, dbPath, apply = false, skipProblems = false }
     const result = apply ? applyMemoryPackage(connection, packageJson, { skipProblems })
       : previewMemoryPackage(connection, packageJson);
     const { rows, ...report } = result;
-    return { ...report, database: target };
+    return { ...report, file: path, database: target };
   } finally {
     connection.close();
   }

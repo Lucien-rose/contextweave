@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 const root = process.cwd();
 const excluded = new Set(["node_modules", ".git"]);
-const forbiddenPaths = /^(private|skills|data|server\/public)(\/|$)|\.(sqlite|db|log)(-|$)|^\.env$/;
+const forbiddenPaths = /^(private|skills|data|imports|server\/public)(\/|$)|\.(sqlite|db|log)(-|$)|^\.env$/;
 const forbidden = [/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/, /sk-[A-Za-z0-9_-]{20,}/];
 let count = 0;
 function walk(dir) {
