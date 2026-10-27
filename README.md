@@ -69,16 +69,16 @@ See [Architecture](docs/ARCHITECTURE.md) and [Host Integration](docs/HOST_INTEGR
 
 The first isolated provider-backed run used a frozen synthetic corpus of 80 ordered events and 106 held-out questions (`k=5`). Every system received the same records and the same configured neural embedding route. The complete ContextWeave route also ran semantic judgment, Lineage, Entity Registry links, progressive T0/T1/T2 recall, Answer Authority, packing and associative expansion; semantic judgment was applied on 106/106 questions.
 
-| System | Top-1 | MRR@5 | Strict evidence precision | Evidence recall | Strict no-context abstention | Queries with extra context |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| SQLite FTS5 / BM25 | 76.3% | 0.860 | 17.9% | 100.0% | 43.3% | 87.7% |
-| Neural vector only | 38.2% | 0.490 | 15.2% | 68.4% | 86.7% | 75.5% |
-| FTS + neural vector | 72.4% | 0.817 | 16.7% | 96.1% | 43.3% | 87.7% |
-| **ContextWeave full pipeline** | **97.4%** | **0.987** | **22.8%** | **100.0%** | **86.7%** | **66.0%** |
+| System | Top-1 | MRR@5 | Strict evidence precision | Evidence recall | Strict no-context abstention |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| SQLite FTS5 / BM25 | 76.3% | 0.860 | 17.9% | 100.0% | 43.3% |
+| Neural vector only | 38.2% | 0.490 | 15.2% | 68.4% | 86.7% |
+| FTS + neural vector | 72.4% | 0.817 | 16.7% | 96.1% | 43.3% |
+| **ContextWeave full pipeline** | **97.4%** | **0.987** | **22.8%** | **100.0%** | **86.7%** |
 
 Against the strongest Top-1 baseline, ContextWeave improved Top-1 retrieval by **21.1 percentage points** and MRR@5 from **0.860 to 0.987**, while preserving 100% evidence recall.
 
-This is an initial single retrieval run, not a claim about final answer generation, privacy-policy behavior or production-user generalization. “Queries with extra context” is a strict evidence-set measure; extra same-entity context is not automatically a hallucination. See the [run report](evaluation/PROVIDER_BENCHMARK_2026-10-27.md), [protocol](evaluation/BENCHMARK_PLAN.md) and [reproduction guide](evaluation/README.md). Two additional clean provider runs remain required before this result is promoted to the first formal benchmark.
+This is an initial single retrieval run, not a claim about final answer generation, privacy-policy behavior or production-user generalization. Strict non-gold context incidence remains in the detailed diagnostic report, not the headline table: it currently mixes useful T1/T2 context with genuine noise and can reward systems that simply under-retrieve. See the [run report](evaluation/PROVIDER_BENCHMARK_2026-10-27.md), [protocol](evaluation/BENCHMARK_PLAN.md) and [reproduction guide](evaluation/README.md). Two additional clean provider runs remain required before this result is promoted to the first formal benchmark.
 
 ## Quick start
 
