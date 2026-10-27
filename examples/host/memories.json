@@ -1,0 +1,11 @@
+{
+  "format": "contextweave-memory-package",
+  "version": 1,
+  "memories": [{
+    "id": "example:harbor",
+    "title": "Harbor project launch",
+    "content": "The Harbor project launches on Thursday. Its launch color is cobalt blue.",
+    "tags": ["Harbor", "launch"],
+    "sensitivity": "personal"
+  }]
+}
