@@ -1,0 +1,35 @@
+name: Container
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start
+        run: docker compose up --build -d --wait
+      - name: Diagnose fresh installation
+        run: docker compose exec -T contextweave moss doctor --json
+      - name: Import preview and apply
+        run: |
+          docker compose stop contextweave
+          docker compose run --rm contextweave import examples/host/memories.json
+          docker compose run --rm contextweave import examples/host/memories.json --apply
+          docker compose up -d --wait
+      - name: Exercise host integration
+        run: docker compose exec -T contextweave moss example
+      - name: Verify restart persistence
+        run: |
+          credentials=$(docker compose exec -T contextweave sha256sum data/config/tokens.env data/config/models.key)
+          docker compose restart contextweave
+          docker compose up -d --wait
+          test "$credentials" = "$(docker compose exec -T contextweave sha256sum data/config/tokens.env data/config/models.key)"
+          docker compose exec -T contextweave moss doctor --json
+          docker compose exec -T contextweave moss example
+      - name: Logs
+        if: failure()
+        run: docker compose logs
+      - name: Cleanup
+        if: always()
+        run: docker compose down --volumes
