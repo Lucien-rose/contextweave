@@ -468,4 +468,3 @@ export function registerCoreTools(server, { core, continuity }) {
     return result({ memory: stripInternal(active), committed: true, family_judgment });
   });
 }
-
