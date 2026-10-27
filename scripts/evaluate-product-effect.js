@@ -19,6 +19,7 @@ const root = new URL('../', import.meta.url);
 const k = 5;
 const realProviders = process.env.CW_BENCHMARK_REAL_PROVIDERS === '1';
 const embeddingRetryDelaysMs = [400, 1200, 3000];
+const progress = message => console.error(`[benchmark] ${message}`);
 
 async function benchmarkEmbeddings(texts, options = {}) {
   const vectors = [];
@@ -142,6 +143,7 @@ for (const [name] of [...people,...projects]) {
   const { entity }=saveEntity(db,{type:projects.some(([project])=>project===name)?'project':'person',display_name:name,aliases:[],sensitivity:'private',namespace:'real'});
   for(const [label,memoryId] of labelToId) if(label.startsWith(`${name}:`)) linkEntity(db,{entity_id:entity.id,memory_id:memoryId,linked:true});
 }
+progress(`fixture ready: ${events.length} events, ${questions.filter(q=>q.split==='heldout').length} held-out questions`);
 
 let providerStatus = null;
 let testVectorStore = null;
@@ -150,11 +152,14 @@ if(realProviders) {
   assert.ok(provider.available,'Configured embedding provider is unavailable');
   testVectorStore=qdrantConfig({indexIdentity:vectorIndexIdentity(provider),dimensions:provider.dimensions});
   assert.match(testVectorStore.collection,/^cw_eval_[a-z0-9_]*_[a-f0-9]{16}$/,'Refusing to use a non-benchmark Qdrant collection');
+  progress(`provider preflight: ${provider.model} (${provider.dimensions} dimensions)`);
   await benchmarkEmbeddings(['ContextWeave benchmark connectivity probe'],{config:provider});
+  progress('provider preflight passed; building isolated vector index');
   await syncVectorIndex(db,{embedder:benchmarkEmbeddings,batchSize:4,maxBatches:100});
   providerStatus=await vectorRuntimeStatus(db,{probe:true});
   assert.equal(providerStatus.qdrant?.reachable,true,'Benchmark Qdrant collection is unreachable');
   assert.equal(providerStatus.pending_count,0,'Benchmark vectors are not fully indexed');
+  progress(`vector index ready: ${providerStatus.indexed_count}/${providerStatus.eligible_count} memories`);
 }
 
 const all = core.list({status:'all',limit:1000});
@@ -268,7 +273,12 @@ const systems={
 const results={};
 for(const [name,run] of Object.entries(systems)) {
   const rows=[];
-  for(const q of questions.filter(q=>q.split==='heldout')) { const started=performance.now();const actual=await run(q);rows.push({...q,actual,latency_ms:performance.now()-started,...score(q.relevant,actual)}); }
+  const heldout=questions.filter(q=>q.split==='heldout');
+  progress(`${name}: 0/${heldout.length}`);
+  for(const [index,q] of heldout.entries()) {
+    const started=performance.now();const actual=await run(q);rows.push({...q,actual,latency_ms:performance.now()-started,...score(q.relevant,actual)});
+    if((index+1)%10===0 || index+1===heldout.length) progress(`${name}: ${index+1}/${heldout.length}`);
+  }
   results[name]={summary:summarize(rows),by_category:Object.fromEntries([...new Set(rows.map(r=>r.category))].sort().map(c=>[c,summarize(rows.filter(r=>r.category===c))])),rows};
 }
 const stableDataset={people,projects,events:events.map(({base_label,...e})=>e),questions:questions.map(({relevant,...q})=>q)};
@@ -281,5 +291,6 @@ lines.push('','## Category breakdown','','| System / category | n | Top-1 | Reca
 for(const [name,r] of Object.entries(results))for(const [category,s] of Object.entries(r.by_category))lines.push(`| ${name} / ${category} | ${s.questions} | ${pct(s.top1_hit_rate)} | ${pct(s.recall_macro_answerable)} | ${pct(s.abstention_accuracy)} |`);
 lines.push('','## Limits','',...report.limits.map(x=>`- ${x}`),'','## Product-level interpretation','',realProviders?'This isolated provider-backed run measures the incremental retrieval effect of the configured ContextWeave pipeline against FTS, neural-vector-only and ordinary FTS+vector hybrid baselines on the same frozen corpus. It does not measure final answer generation or privacy/policy behavior.':'This run may support claims about the local ContextWeave core only. It cannot support claims about the complete provider-backed product until the same frozen dataset is run in an isolated deployment with the configured embedding and recall-judge routes.');
 writeFileSync(new URL('product-core.md',dir),lines.join('\n')+'\n');
+progress(`report written: ${fileURLToPath(new URL('product-core.md',dir))}`);
 console.log(JSON.stringify({threshold:vectorThreshold,heldout:report.heldout_questions,results:Object.fromEntries(Object.entries(results).map(([name,r])=>[name,r.summary])),report:fileURLToPath(new URL('product-core.md',dir))},null,2));
 db.close();
