@@ -16,7 +16,7 @@ This report records the first successful isolated provider-backed product-effect
 
 ## Aggregate results
 
-| System | Top-1 | MRR@5 | Strict evidence precision | Evidence recall | Strict no-context abstention | Queries with extra context |
+| System | Top-1 | MRR@5 | Strict evidence precision | Evidence recall | Strict no-context abstention | Queries with any non-gold context |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | SQLite FTS5 / BM25 | 76.3% | 0.860 | 17.9% | 100.0% | 43.3% | 87.7% |
 | Neural vector only | 38.2% | 0.490 | 15.2% | 68.4% | 86.7% | 75.5% |
@@ -51,7 +51,7 @@ All compared systems received the same host-supplied synthetic memory candidates
 - This run scores retrieved evidence IDs, not final generated answers or grounded citations.
 - Privacy and policy behavior remain a separate evaluation because the baselines do not implement an equivalent contract.
 - Full host-generated query topics and hypotheses, Arc navigation, long-source expansion and answer generation were not enabled.
-- “Queries with extra context” is deliberately strict. Additional same-entity context may be useful and does not by itself prove that a final answer would hallucinate.
+- “Queries with any non-gold context” is a deliberately strict query-level diagnostic, not a false-recall or hallucination rate. It currently groups useful T1 support, acceptable T2 background and genuine noise together, and can favor systems that under-retrieve. The formal benchmark must report those roles separately.
 - The aggregate ID metric does not separately score T0 factual evidence, T1 support and Answer Authority fields.
 - Gateway ingestion generates UUID memory IDs, so exact-score ties may cause small Top-1 and MRR variation across runs.
 - This is one provider-backed run. Two additional clean runs are required by the acceptance plan before publishing a formal three-run aggregate.
