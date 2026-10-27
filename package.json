@@ -47,7 +47,9 @@
     "tools:document": "node scripts/document-tools.js compat",
     "tools:document:runtime": "node scripts/document-tools.js runtime",
     "tools:document:admin": "node scripts/document-tools.js admin",
-    "memory:import": "node scripts/import-memory-package.js"
+    "memory:import": "node scripts/import-memory-package.js",
+    "doctor": "node scripts/doctor.js",
+    "example:host": "node examples/host/run.js"
   },
   "license": "Apache-2.0"
 }
