@@ -73,7 +73,7 @@ Privacy and context gates are tested in a separate suite because an unrestricted
 - No private production database or personal memory content.
 - No manually supplied query topics, hints or expected IDs.
 - At least 100 held-out questions across the required categories.
-- At least 25 unanswerable questions.
+- At least 25 no-context questions spanning unanswerable and unrelated controls.
 - Three clean runs for provider-dependent systems, with deterministic labels and separately reported variance.
 - Full pipeline, vector-only and hybrid use the same embedding provider and corpus revision.
 - Existing unit and integration tests remain green.
