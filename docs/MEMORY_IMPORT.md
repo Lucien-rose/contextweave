@@ -103,3 +103,9 @@ Only the first 100 issues are listed; counts include the full package. Memory bo
 - This command is append-only. Conflicts must be resolved by editing the package or by explicit existing memory workflows; it never silently replaces canonical records.
 - Imported records receive an audit entry and a new family change receipt. Historical receipts from other systems are not synthesized.
 - Vector indexing is queued, not automatically completed during import.
+
+## Docker and automatic path discovery
+
+The CLI accepts absolute paths, working-directory paths, `file:` URLs and filenames relative to `MOSS_IMPORT_DIR`. Without a filename it selects exactly one JSON file from the working/import directories, excluding npm manifests. Ambiguous matches require an explicit path. Docker mounts host `imports/` at `/imports` and configures that search directory automatically.
+
+See the [Docker guide](DOCKER.md#import-your-json-package) for the stop/preview/apply/restart sequence. The existing transaction, conflict and duplicate rules above apply unchanged.
