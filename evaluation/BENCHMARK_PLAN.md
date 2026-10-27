@@ -44,6 +44,7 @@ Score answer-bearing evidence independently of the final language model:
 - Recall@k and Precision@k;
 - MRR and top-1 hit rate;
 - correct abstention / NO_RECALL accuracy;
+- role-aware context accounting: answer-bearing T0 evidence, useful T1 support, bounded T2 background and genuinely irrelevant intrusions;
 - current-state accuracy and historical-state accuracy;
 - contradiction and stale-version retrieval rate;
 - returned characters/tokens, latency and provider cost.
@@ -65,6 +66,7 @@ Privacy and context gates are tested in a separate suite because an unrestricted
 5. Persist raw candidates, final selected evidence, answer, route/fallback status and usage.
 6. Score automatically, then manually review all disagreements and a sample of agreements.
 7. Publish aggregate results with confidence intervals and per-category breakdowns. Keep raw synthetic results reproducible.
+8. Keep strict non-gold context incidence as a diagnostic only. Do not present it as a false-recall or hallucination rate until T0, T1, T2 and irrelevant items are labeled separately.
 
 ## Acceptance for the first formal run
 
