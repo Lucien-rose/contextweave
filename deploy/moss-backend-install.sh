@@ -7,10 +7,11 @@ NODE="$(command -v node)"
 id moss >/dev/null 2>&1 || useradd --system --home-dir "$APP_DIR" --shell /usr/sbin/nologin moss
 install -d -o moss -g moss -m 700 "$APP_DIR/data" "$CONFIG_DIR" "$CONFIG_DIR/models"
 if [[ ! -e "$CONFIG_DIR/backend.env" ]]; then
-  TOKEN="$(node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("hex"))')"
-  printf '%s=%s\n' MOSS_ADMIN_TOKEN "$TOKEN" MOSS_CONFIG_DIR "$CONFIG_DIR" MOSS_DB_PATH "$APP_DIR/data/moss-memory.sqlite" > "$CONFIG_DIR/backend.env"
+  ADMIN_TOKEN="$(node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("hex"))')"
+  RUNTIME_TOKEN="$(node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("hex"))')"
+  printf '%s=%s\n' MOSS_ADMIN_TOKEN "$ADMIN_TOKEN" MOSS_RUNTIME_TOKEN "$RUNTIME_TOKEN" MOSS_CONFIG_DIR "$CONFIG_DIR" MOSS_DB_PATH "$APP_DIR/data/moss-memory.sqlite" > "$CONFIG_DIR/backend.env"
   chmod 600 "$CONFIG_DIR/backend.env"
-  unset TOKEN
+  unset ADMIN_TOKEN RUNTIME_TOKEN
 fi
 (cd "$APP_DIR" && npm ci --omit=dev && MOSS_CONFIG_DIR="$CONFIG_DIR" node scripts/init-backend.js)
 chown -R moss:moss "$APP_DIR/data" "$CONFIG_DIR/models" "$CONFIG_DIR/models.key"
