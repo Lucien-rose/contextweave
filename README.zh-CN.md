@@ -82,6 +82,20 @@ ContextWeave 围绕四个原则设计：
 
 ## 快速开始
 
+使用 Docker Compose，无需在宿主机安装 Node.js：
+
+```sh
+git clone https://github.com/Lucien-rose/contextweave.git
+cd contextweave
+mkdir -p imports
+docker compose up --build -d --wait
+docker compose exec contextweave moss doctor
+```
+
+首次启动自动生成独立的运行时与管理凭证，并持久保存数据库和配置。凭证获取、JSON 导入与端到端示例见 [Docker 部署指南](docs/DOCKER.md)。Agent 使用 `/mcp/runtime`，管理客户端使用 `/mcp/admin`；旧 `/mcp` 继续兼容。
+
+原生 Node.js 安装方式：
+
 需要 **Node.js 24+** 和 npm。基础召回无需付费模型，也不要求安装 Qdrant。
 
 ```sh
