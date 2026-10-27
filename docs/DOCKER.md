@@ -5,6 +5,7 @@ Requires Docker Engine/Desktop with Compose v2. No host Node.js, model key or ve
 ```sh
 git clone https://github.com/Lucien-rose/contextweave.git
 cd contextweave
+mkdir -p imports
 docker compose up --build -d --wait
 docker compose exec contextweave moss doctor
 ```
