@@ -4,7 +4,7 @@
 
 Node 24 LTS is the supported deployment runtime. The public HTTP service defaults
 to loopback port 2091. `MOSS_HTTP_HOST`, `MOSS_HTTP_PORT`, `MOSS_DB_PATH` and
-`MOSS_ADMIN_TOKEN` select the listener, database and owner credential.
+`MOSS_ADMIN_TOKEN` selects the owner credential for admin MCP, compatibility MCP and legacy owner APIs. `MOSS_RUNTIME_TOKEN` optionally supplies a distinct least-privilege credential for `/mcp/runtime`; it falls back to the admin token when omitted. New remote deployments should configure both.
 
 `MOSS_CONFIG_DIR` selects configuration storage. Public server startup defaults to
 `data/config`; export `MOSS_CONFIG_DIR="$PWD/data/config"` for local maintenance commands

@@ -24,7 +24,9 @@ With server-side append-only model conversations, do not allow old temporary sli
 
 ## Initialization
 
-- MCP: `moss_bootstrap` returns schema 3 by default.
+- MCP: connect ordinary agents to `/mcp/runtime`; `moss_bootstrap` returns schema 3 by default.
+- Keep `/mcp/admin` in a separate owner/operator connection. Do not expose its lifecycle, deletion or configuration tools to the conversation agent.
+- Existing `/mcp` clients continue to work during migration, but the combined surface is deprecated.
 - Existing HTTP: `POST /api/gateway/bootstrap` keeps schema 2 when `schema_version` is omitted, so an unchanged host can keep working.
 - New HTTP clients: explicitly send `schema_version: 3`.
 - Public default budgets are documented in CONFIGURATION.md; tools/list exposes effective defaults.

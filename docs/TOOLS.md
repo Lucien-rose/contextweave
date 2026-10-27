@@ -1,6 +1,6 @@
-# MCP tools
+# MCP compat tools
 
-Generated from tools/list with public default configuration. Live tools/list is authoritative after overrides. Character budgets use UTF-16 code units, not tokens. Inspect inputSchema for minimum, maximum and default.
+Deprecated combined compatibility inventory. New clients should use the runtime or admin surface. Generated from tools/list with public default configuration. Live tools/list is authoritative after overrides. Character budgets use UTF-16 code units, not tokens. Inspect inputSchema for minimum, maximum and default.
 
 ## moss_status
 

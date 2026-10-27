@@ -1,8 +1,20 @@
 # Backend API
 
-HTTP `/api/` routes and `/mcp` share the owner Bearer token. `/health` returns
-`{ok, version}` without content or local paths. Stdio MCP uses the invoking process.
-The API is single-owner; a multi-user host must isolate databases/credentials itself.
+Legacy HTTP `/api/` routes use the admin Bearer token. MCP is split into the agent-facing
+`/mcp/runtime` surface and the operator-facing `/mcp/admin` surface. The combined `/mcp`
+endpoint remains as a deprecated compatibility route and requires the admin token. `/health`
+returns `{ok, version}` without content or local paths. Stdio MCP uses the invoking process.
+The API is single-owner; a multi-user host must isolate databases and credentials itself.
+
+| Surface | Authentication | Status |
+| --- | --- | --- |
+| `POST /mcp/runtime` | `MOSS_RUNTIME_TOKEN`; admin token also accepted | Preferred agent integration |
+| `POST /mcp/admin` | `MOSS_ADMIN_TOKEN` | Preferred operator integration |
+| `POST /mcp` | `MOSS_ADMIN_TOKEN` | Deprecated combined compatibility surface |
+| `/api/*` | `MOSS_ADMIN_TOKEN` | Existing owner API; stable `/api/v1` contract is a separate migration |
+| `GET /health` | none | Health and version only |
+
+If `MOSS_RUNTIME_TOKEN` is omitted, the runtime endpoint uses the admin token for backward-compatible deployment. See [MCP surfaces](MCP_SURFACES.md) for the tool boundary and migration policy.
 
 | Area | HTTP entrypoints | Contract source |
 | --- | --- | --- |

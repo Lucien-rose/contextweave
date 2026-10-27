@@ -3,8 +3,13 @@
 ## Composition
 
 `backend.js` assembles the public HTTP/MCP service. `mcp/memory-server.js` registers
-memory tools; `admin/routes/memory-api.js` registers owner APIs. Both use the same
-domain services. Hosts compose their own interfaces around those services.
+one explicit runtime, admin or compatibility tool surface through `mcp/surfaces.js`;
+`admin/routes/memory-api.js` registers the existing owner APIs. Every surface uses the
+same domain services. Hosts compose their own interfaces around those services.
+
+Runtime and admin are capability boundaries, not separate databases. The runtime token
+cannot open admin or compatibility MCP. The deprecated compatibility surface preserves
+the previous combined inventory while hosts migrate.
 
 | Module | Responsibility |
 | --- | --- |

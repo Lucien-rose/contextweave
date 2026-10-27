@@ -4,6 +4,8 @@ This distribution contains public engineering defaults, not a production deploym
 
 | Variable | Default | Range | Purpose |
 |---|---:|---|---|
+| MOSS_ADMIN_TOKEN | none | at least 24 characters | Owner credential for admin MCP, compatibility MCP and legacy HTTP APIs |
+| MOSS_RUNTIME_TOKEN | admin token | at least 24 characters | Least-privilege credential for runtime MCP only |
 | CW_SEED_CHARS | 4096 | 2048–24000 | Context Seed response ceiling |
 | CW_MAIN_CHARS | 6000 | 1200–12000 | Main recall content budget; legacy bootstrap content budget |
 | CW_TOTAL_CHARS | 12000 | 2048–24000 | Combined recall response ceiling |

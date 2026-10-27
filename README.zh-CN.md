@@ -92,16 +92,21 @@ npm ci
 export MOSS_CONFIG_DIR="$PWD/data/config"
 npm run init
 export MOSS_ADMIN_TOKEN=$(node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("hex"))')
+export MOSS_RUNTIME_TOKEN=$(node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("hex"))')
 npm start
 ```
 
-HTTP 默认监听 `127.0.0.1:2091`。`GET /health` 无需认证，仅返回健康状态和版本；所有 `/api/` 与 `/mcp` 接口均要求 `Authorization: Bearer <MOSS_ADMIN_TOKEN>`。请安全保存令牌供重启使用；远程访问需要 TLS。
+HTTP 默认监听 `127.0.0.1:2091`。`GET /health` 无需认证，仅返回健康状态和版本。Agent 使用 `MOSS_RUNTIME_TOKEN` 接入 `/mcp/runtime`；运维端使用 `MOSS_ADMIN_TOKEN` 接入 `/mcp/admin` 与旧版 `/api/` 路由。合并式 `/mcp` 暂时保留用于兼容迁移。请安全保存两个令牌供重启使用；远程访问需要 TLS。
 
 本地 MCP 进程接入：
 
 ```sh
-npm run start:stdio
+npm run start:stdio:runtime
+# 在独立的管理端连接中：
+npm run start:stdio:admin
 ```
+
+Runtime/Admin 工具边界与旧客户端迁移方式见 [MCP 接口拆分](docs/MCP_SURFACES.md)。
 
 运行合成数据 Demo 与集成测试：
 
