@@ -77,16 +77,21 @@ npm ci
 export MOSS_CONFIG_DIR="$PWD/data/config"
 npm run init
 export MOSS_ADMIN_TOKEN=$(node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("hex"))')
+export MOSS_RUNTIME_TOKEN=$(node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("hex"))')
 npm start
 ```
 
-The HTTP server binds to `127.0.0.1:2091` by default. `GET /health` is unauthenticated and returns health/version only. Every `/api/` and `/mcp` endpoint requires `Authorization: Bearer <MOSS_ADMIN_TOKEN>`. Persist the token securely for restarts; use TLS for remote access.
+The HTTP server binds to `127.0.0.1:2091` by default. `GET /health` is unauthenticated and returns health/version only. Agents connect to `/mcp/runtime` with `MOSS_RUNTIME_TOKEN`; operators use `/mcp/admin` and legacy `/api/` routes with `MOSS_ADMIN_TOKEN`. The combined `/mcp` route remains temporarily available for compatibility. Persist both tokens securely for restarts; use TLS for remote access.
 
 For local MCP process transport:
 
 ```sh
-npm run start:stdio
+npm run start:stdio:runtime
+# In a separate owner/operator client:
+npm run start:stdio:admin
 ```
+
+See [MCP surfaces](docs/MCP_SURFACES.md) for the runtime/admin tool boundary and legacy migration path.
 
 For a synthetic recall demonstration and integration tests:
 
