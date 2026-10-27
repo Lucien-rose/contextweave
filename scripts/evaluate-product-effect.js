@@ -13,11 +13,36 @@ import { saveEntity, linkEntity } from '../server/src/entity/service.js';
 import { prepareVectorRecall, prepareAssociativeVectorRecall, syncVectorIndex, vectorRuntimeStatus } from '../server/src/vector-retrieval.js';
 import { qdrantConfig } from '../server/src/vector-store.js';
 import { vectorIndexIdentity } from '../server/src/vector/identity.js';
-import { vectorProviderConfig } from '../server/src/vector-provider.js';
+import { createEmbeddings, vectorProviderConfig } from '../server/src/vector-provider.js';
 
 const root = new URL('../', import.meta.url);
 const k = 5;
 const realProviders = process.env.CW_BENCHMARK_REAL_PROVIDERS === '1';
+const embeddingRetryDelaysMs = [400, 1200, 3000];
+
+async function benchmarkEmbeddings(texts, options = {}) {
+  const vectors = [];
+  // Keep the benchmark on the same conservative request shape as interactive
+  // recall. Some OpenAI-compatible gateways accept one input but terminate
+  // larger request bodies with a transport-level 502.
+  for (const text of texts) {
+    let lastError;
+    for (let attempt = 0; attempt <= embeddingRetryDelaysMs.length; attempt += 1) {
+      try {
+        const [vector] = await createEmbeddings([text], options);
+        vectors.push(vector);
+        lastError = null;
+        break;
+      } catch (error) {
+        lastError = error;
+        if (error?.code !== 'request-failed' || attempt === embeddingRetryDelaysMs.length) throw error;
+        await new Promise(resolve => setTimeout(resolve, embeddingRetryDelaysMs[attempt]));
+      }
+    }
+    if (lastError) throw lastError;
+  }
+  return vectors;
+}
 const people = [
   ['Mira','espresso','jasmine tea','caffeine disrupted sleep','peanuts','Kyoto','river','station','quiet holidays with at most two activities'],
   ['Nora','latte','chamomile tea','milk upset her stomach','shellfish','Oslo','harbor','library','museum mornings and free afternoons'],
@@ -125,7 +150,8 @@ if(realProviders) {
   assert.ok(provider.available,'Configured embedding provider is unavailable');
   testVectorStore=qdrantConfig({indexIdentity:vectorIndexIdentity(provider),dimensions:provider.dimensions});
   assert.match(testVectorStore.collection,/^cw_eval_[a-z0-9_]*_[a-f0-9]{16}$/,'Refusing to use a non-benchmark Qdrant collection');
-  await syncVectorIndex(db,{batchSize:64,maxBatches:100});
+  await benchmarkEmbeddings(['ContextWeave benchmark connectivity probe'],{config:provider});
+  await syncVectorIndex(db,{embedder:benchmarkEmbeddings,batchSize:4,maxBatches:100});
   providerStatus=await vectorRuntimeStatus(db,{probe:true});
   assert.equal(providerStatus.qdrant?.reachable,true,'Benchmark Qdrant collection is unreachable');
   assert.equal(providerStatus.pending_count,0,'Benchmark vectors are not fully indexed');
@@ -201,7 +227,7 @@ const localVectors={
 const realVectorCache=new Map();
 async function realPrimary(options) {
   const key=JSON.stringify([options.query,options.allowedMemoryIds||null]);
-  if(!realVectorCache.has(key)) realVectorCache.set(key,prepareVectorRecall(db,{...options,mode:'on',syncIndex:false,ensureStore:false}));
+  if(!realVectorCache.has(key)) realVectorCache.set(key,prepareVectorRecall(db,{...options,mode:'on',syncIndex:false,ensureStore:false,embedder:benchmarkEmbeddings}));
   const result=await realVectorCache.get(key);
   assert.equal(result.enabled,true,`Real vector route unavailable: ${result.reason||'unknown'}`);
   assert.equal(result.degraded,false,`Real vector route degraded: ${result.reason||'unknown'}`);
@@ -209,7 +235,7 @@ async function realPrimary(options) {
 }
 const realVectors={
   primary:realPrimary,
-  association:options=>prepareAssociativeVectorRecall(db,{...options,mode:'on'}),
+  association:options=>prepareAssociativeVectorRecall(db,{...options,mode:'on',embedder:benchmarkEmbeddings}),
 };
 const jevStatuses=[];
 async function contextweave(q) {
