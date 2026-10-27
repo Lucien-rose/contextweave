@@ -34,6 +34,8 @@
     "init": "node scripts/init-backend.js",
     "start": "node server/src/backend.js --http",
     "start:stdio": "node server/src/backend.js --stdio",
+    "start:stdio:runtime": "node server/src/backend.js --stdio-runtime",
+    "start:stdio:admin": "node server/src/backend.js --stdio-admin",
     "test": "MOSS_VECTOR_ENV_FILE=/dev/null MOSS_JEV_ENV_FILE=/dev/null MOSS_JEV_API_KEY= node --test server/test/public-*.test.js",
     "demo": "node scripts/run-public-demo.js",
     "health:check": "node scripts/health-check.js",
@@ -41,7 +43,9 @@
     "vector:migration": "node scripts/vector-migration.js",
     "architecture:check": "node scripts/check-architecture.js",
     "boundary:check": "node scripts/check-public.js",
-    "tools:document": "node scripts/document-tools.js",
+    "tools:document": "node scripts/document-tools.js compat",
+    "tools:document:runtime": "node scripts/document-tools.js runtime",
+    "tools:document:admin": "node scripts/document-tools.js admin",
     "memory:import": "node scripts/import-memory-package.js"
   },
   "license": "Apache-2.0"
