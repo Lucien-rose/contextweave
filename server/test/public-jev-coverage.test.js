@@ -94,6 +94,34 @@ test("low-probability winners abstain independently for relevance, path and util
   }
 });
 
+test("calibrated admission keeps useful evidence at 0.75 while association paths require 0.8", async () => {
+  const candidate = { candidate_id: "target", title: "Associated event", allowed_uses: ["supporting", "background", "omit"],
+    requires_path_judgment: true, association_context: { seed: { id: "seed", title: "Trail", snippet: "Winding route" }, bridge: { cue: "route" } },
+    snippet: { id: "pinned", text: "A cabin beside the lake" } };
+  const payload = { query: "Remember the winding trail", candidates: [candidate] };
+  const request = buildJevRequest(payload);
+  const judge = async probabilities => judgeJevCandidates({ payload }, {
+    config: { baseUrl: "https://example.invalid", apiKey: "test", model: "test", timeoutMs: 1000 },
+    fetchImpl: async () => Response.json({ answers: Object.fromEntries(
+      Object.entries(request.questions).map(([key, question]) => {
+        const field = key.slice(3);
+        const choice = field === "path_fit" ? "coherent" : field === "relevance" ? "useful" : "material";
+        const probability = probabilities[field];
+        const options = Object.keys(question.criteria);
+        return [key, { type: "choice", choice, probabilities: Object.fromEntries(options.map(option =>
+          [option, option === choice ? probability : (1 - probability) / (options.length - 1)])) }];
+      })), model: "test", usage: { input_tokens: 1, output_tokens: 1 } }),
+  });
+  const admitted = (await judge({ relevance: .76, path_fit: .8, answer_utility: .75 })).decisions[0];
+  assert.equal(admitted.use, "supporting");
+  assert.equal(admitted.path_fit, "coherent");
+  const weakPath = (await judge({ relevance: .76, path_fit: .79, answer_utility: .75 })).decisions[0];
+  assert.equal(weakPath.use, "supporting");
+  assert.equal(weakPath.path_fit, "uncertain");
+  const weakRelevance = (await judge({ relevance: .74, path_fit: .8, answer_utility: .75 })).decisions[0];
+  assert.equal(weakRelevance.use, "omit");
+});
+
 test("over-budget required paths are explicitly deferred while every scheduled request stays bounded", async t => {
   const { db, input, baseline, snapshot } = fixture(t);
   for (let i = 0; i < 45; i++) {

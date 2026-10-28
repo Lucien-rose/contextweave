@@ -20,9 +20,11 @@ semantic criteria. Ordinary candidates receive relevance and answer-utility
 questions; association-only candidates also receive a path-fit question.
 Context appropriateness remains a separate question when required. Priority and
 reason are derived locally, and evidence references stay pinned to input snippets.
-Each selected choice must have probability at least 0.8 (overridable through
-the judge configuration's `admissionProbability`); otherwise it becomes uncertain.
-This is a conservative starting policy, not a calibrated accuracy guarantee.
+Selected relevance, answer-utility and context-fit choices must have probability
+at least 0.75 (`admissionProbability`). Association path-fit choices retain the
+stricter 0.8 minimum (`associationProbability`); lower-confidence choices become
+uncertain. These defaults come from a bounded production calibration sample and
+are not a universal accuracy guarantee.
 It budgets the serialized state and questions together, up to 24 candidates and
 12,000 characters per batch, at most three sequential batches per recall.
 No database migration or persistent relation is needed. Seed revisions invalidate in-flight judgments just as

@@ -2,8 +2,9 @@ import { createHash } from "node:crypto";
 import { jevConfig, requestJevDecisions } from "../jev/client.js";
 export { jevConfig } from "../jev/client.js";
 
-export const JEV_PROMPT_VERSION = "openrouter-decisions-v5";
-export const JEV_ADMISSION_PROBABILITY = 0.8;
+export const JEV_PROMPT_VERSION = "openrouter-decisions-v6";
+export const JEV_ADMISSION_PROBABILITY = 0.75;
+export const JEV_ASSOCIATION_PROBABILITY = 0.8;
 const CRITERIA = {
   relevance: { useful: "The snippet supports the current subject, task and scope, or supplies applicable standing context.",
     irrelevant: "Unrelated, different subject/scope/time, or only overlapping words and broad tags.",
@@ -42,7 +43,8 @@ export function jevIdentity(config) {
   return createHash("sha256").update(JSON.stringify({ baseUrl: config.baseUrl, model: config.model,
     endpoint: config.connection?.protocol || "/api/alpha/decisions", version: JEV_PROMPT_VERSION, rules: RULES,
     criteria: CRITERIA, association_criteria: ASSOCIATION_CRITERIA,
-    admission_probability: config.admissionProbability ?? JEV_ADMISSION_PROBABILITY })).digest("hex");
+    admission_probability: config.admissionProbability ?? JEV_ADMISSION_PROBABILITY,
+    association_probability: config.associationProbability ?? JEV_ASSOCIATION_PROBABILITY })).digest("hex");
 }
 
 export function buildJevRequest(payload) {
@@ -93,7 +95,10 @@ export async function judgeJevCandidates(snapshot, options = {}) {
 
 async function judgeJevBatch(snapshot, { config = jevConfig(), fetchImpl, requireComplete = false } = {}) {
   const minimum = config.admissionProbability ?? JEV_ADMISSION_PROBABILITY;
-  if (!Number.isFinite(minimum) || minimum <= 0.5 || minimum > 1) throw new TypeError("Invalid Jev admission probability");
+  const associationMinimum = config.associationProbability ?? JEV_ASSOCIATION_PROBABILITY;
+  if (![minimum, associationMinimum].every(value => Number.isFinite(value) && value > 0.5 && value <= 1)) {
+    throw new TypeError("Invalid Jev admission probability");
+  }
   const { candidates } = snapshot.payload;
   const request = buildJevRequest(snapshot.payload);
   const { questions } = request;
@@ -102,7 +107,7 @@ async function judgeJevBatch(snapshot, { config = jevConfig(), fetchImpl, requir
   const decisions = candidates.flatMap((candidate, index) => {
     const answers = Object.fromEntries(Object.keys(criteriaFor(candidate)).map((field) => [field, result.answers[`c${index}_${field}`]]));
     if (Object.entries(answers).some(([field, answer]) => !answer && (field !== "context_fit" || candidate.context_check))) return [];
-    const accepted = answer => answer.probabilities[answer.choice] >= minimum;
+    const accepted = (answer, threshold = minimum) => answer.probabilities[answer.choice] >= threshold;
     const relevance = accepted(answers.relevance) ? answers.relevance.choice : "uncertain";
     const utility = accepted(answers.answer_utility) ? answers.answer_utility.choice : "uncertain";
     const useful = relevance === "useful" && ["material", "background"].includes(utility);
@@ -112,7 +117,7 @@ async function judgeJevBatch(snapshot, { config = jevConfig(), fetchImpl, requir
     return [{ candidate_id: candidate.candidate_id, context_fit: contextFit,
       relevance: relevance === "useful" && !useful ? "uncertain" : relevance,
       ...(candidate.requires_path_judgment ? {
-        path_fit: candidate.association_context && accepted(answers.path_fit) ? answers.path_fit.choice : "uncertain",
+        path_fit: candidate.association_context && accepted(answers.path_fit, associationMinimum) ? answers.path_fit.choice : "uncertain",
       } : {}),
       answer_utility: utility,
       use, priority: useful ? 2 : 0,
