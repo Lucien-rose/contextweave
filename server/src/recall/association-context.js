@@ -26,6 +26,7 @@ export function associationContext(entry, runtime, inspected) {
 
 export function associationDecision(entry, decision) {
   if (!entry.associationEvidence) return null;
+  if (decision?.coverage === "deferred") return "association-path-deferred";
   if (!decision) return "association-path-unjudged";
   if (decision.path_fit !== "coherent") return `association-path-${decision.path_fit || "unjudged"}`;
   if (!["material", "background"].includes(decision.answer_utility)) return "association-no-answer-utility";

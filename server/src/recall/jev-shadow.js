@@ -28,11 +28,12 @@ export async function recallWithJevShadow(db, input = {}, dependencies = {}) {
     else {
       const providerStart = performance.now();
       try {
-        const judged = await judgeJevCandidates(snapshot, { ...dependencies, config });
+        const judged = await judgeJevCandidates(snapshot, { ...dependencies, config, requireComplete: true });
         report.provider_ms = elapsed(providerStart);
         if (![...snapshot.rows.map(({ entry }) => entry.memory), ...snapshot.seeds]
           .every(memory => unchanged(db, memory))) throw new Error("jev-stale-snapshot");
         const decisions = new Map(judged.decisions.map((decision) => [decision.candidate_id, decision]));
+        for (const id of snapshot.coverage.deferred_ids) decisions.set(id, { coverage: "deferred" });
         const simulated = simulateSelection(db, input, captured, snapshot, diagnostic, decisions);
         Object.assign(report, { status: "observed", usage: judged.usage, resolved_model: judged.resolvedModel,
           decisions: snapshot.rows.map(({ candidate, baselineReason, baselineSelected }) => ({

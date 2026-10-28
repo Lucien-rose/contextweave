@@ -14,8 +14,11 @@ The request-local `association_context` includes a permitted seed excerpt,
 lexical match terms, FTS rank, vector qualification, entity discovery status,
 and the existing association bridge. These are discovery signals, not factual
 authority. They are included in the existing 24-candidate, 12,000-character Jev
-snapshot budget. No database migration, persistent relation or additional model
-request is needed. Seed revisions invalidate in-flight judgments just as
+snapshot budget in the original release. The current planner deduplicates seeds,
+uses short request-local candidate IDs, and sends the decision rubric once.
+It budgets the serialized state and questions together, up to 24 candidates and
+12,000 characters per batch, at most three sequential batches per recall.
+No database migration or persistent relation is needed. Seed revisions invalidate in-flight judgments just as
 candidate revisions do.
 
 A coherent path with material utility may enter the main lane as T2. Coherent
@@ -38,3 +41,13 @@ accidental lexical matches, answer utility, background budgets, model failure,
 seed revisions and the provider contract with deterministic judgments. These
 tests validate the contract and enforcement. Real-provider replay is still
 required to measure semantic accuracy and latency before production rollout.
+
+The planner schedules local return candidates and association-only paths before
+optional exploratory records. Coverage includes both groups. Required candidates
+that cannot fit are reported in `deferred_ids`; successful partial runs report
+`jev_status: partial`, not a complete judgment. Only judged indirect candidates
+compete in semantic delivery; a provider failure still uses the local fallback.
+Ordinary past-event references keep active records and vector discovery in scope.
+The old-state suppression rule applies only to the existing old-state intent,
+not to every historical reference. Explicit version queries retain their original
+current/historical/comparison state scopes.

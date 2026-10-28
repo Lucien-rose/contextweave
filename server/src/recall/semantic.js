@@ -7,10 +7,11 @@ export function applySemanticDecisions(observed, baseline, decisions) {
     const id = entry.memory.id;
     const decision = decisions.get(id);
     if (associationDecision(entry, decision)) continue;
-    if ((entry.rawDirectEvidence && local.has(id)) || !decision) {
-      if (local.has(id)) selected.push(local.get(id));
+    if (entry.rawDirectEvidence && local.has(id)) {
+      selected.push(local.get(id));
       continue;
     }
+    if (!decision) continue;
     if (decision.relevance === "uncertain" || decision.context_fit === "uncertain") continue;
     if (decision.relevance !== "useful" || decision.use === "omit" || decision.context_fit === "inappropriate") continue;
     selected.push({ ...entry, semanticDecision: true, semanticPriority: decision.priority,

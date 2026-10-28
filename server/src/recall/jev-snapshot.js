@@ -3,49 +3,64 @@ import { isBackgroundEntry } from "./background.js";
 import { assignRecallSemantics } from "./tiering.js";
 import { relevantChunk } from "./chunks.js";
 import { associationContext } from "./association-context.js";
+import { buildJevRequest } from "./jev-provider.js";
 
 const SOURCES = ["soft-rejected", "raw", "fts", "situation", "vector", "entity", "association"];
 
 export function buildJevSnapshot({ runtime, entries }, baseline, input) {
-  const trace = new Map(baseline.trace.candidates.map((item) => [item.id, item]));
+  const trace = new Map(baseline.trace.candidates.map(item => [item.id, item]));
   const inspected = new Map(entries.filter(row => row.formalAllowed)
     .map(({ entry }) => [entry.memory.id, entry.memory]));
-  const rows = entries.map((row) => snapshotRow(row, runtime, trace, inspected)).filter(Boolean);
-  const queues = SOURCES.map((source) => rows.filter((row) => row.sources.includes(source)));
-  const selected = new Map();
-  let chars = 2;
-  const add = (row) => {
-    if (!row || selected.has(row.candidate.candidate_id) || selected.size >= 24) return;
-    const size = JSON.stringify(row.candidate).length + (selected.size ? 1 : 0);
-    if (chars + size > 12000) return;
-    selected.set(row.candidate.candidate_id, row);
-    chars += size;
-  };
-  for (const row of rows.filter(({ baselineSelected }) => baselineSelected)) add(row);
-  for (let position = 0; position < rows.length && selected.size < 24; position += 1) {
-    for (const queue of queues) {
-      const row = queue[position];
-      add(row);
-    }
-  }
-  const candidates = [...selected.values()].map((row) => row.candidate);
-  const baselineSelectedCount = rows.filter(({ baselineSelected }) => baselineSelected).length;
-  const baselineCoveredCount = [...selected.values()].filter(({ baselineSelected }) => baselineSelected).length;
-  const payload = { schema_version: "jev-candidates-v2", query: input.query,
+  const rows = entries.map(row => snapshotRow(row, runtime, trace, inspected)).filter(Boolean);
+  const payloadFor = batchRows => ({ schema_version: "jev-candidates-v3", query: input.query,
     query_representation: runtime.queryContext.facets || runtime.queryContext.contextEnvelope || null,
-    context: input.context || "general", intimacy_mode: input.intimacyMode || "off", candidates };
-  const fingerprint = createHash("sha256").update(JSON.stringify(payload)).digest("hex");
-  const seeds = [...new Set(candidates.map(candidate => candidate.association_context?.seed.id).filter(Boolean))]
+    context: input.context || "general", intimacy_mode: input.intimacyMode || "off",
+    candidates: batchRows.map(row => row.candidate) });
+  const sizeOf = batchRows => JSON.stringify(buildJevRequest(payloadFor(batchRows))).length;
+  const required = rows.filter(row => row.baselineSelected || row.localEligible || row.entry.associationEvidence)
+    .sort((a, b) => Number(b.baselineSelected) - Number(a.baselineSelected)
+      || (a.entry.associationRank || Infinity) - (b.entry.associationRank || Infinity));
+  const buckets = [[]], selected = new Map();
+  const add = (row, mayOpenBatch) => {
+    if (!row || selected.has(row.candidate.candidate_id)) return;
+    let bucket = buckets.find(items => items.length < 24 && sizeOf([...items, row]) <= 12000);
+    if (!bucket && mayOpenBatch && buckets.length < 3 && sizeOf([row]) <= 12000) {
+      bucket = [];
+      buckets.push(bucket);
+    }
+    if (!bucket) return;
+    bucket.push(row);
+    selected.set(row.candidate.candidate_id, row);
+  };
+  for (const row of required) add(row, true);
+  const queues = SOURCES.map(source => rows.filter(row => row.sources.includes(source)));
+  for (let position = 0; position < rows.length; position += 1) {
+    for (const queue of queues) add(queue[position], false);
+  }
+  const selectedRows = [...selected.values()];
+  const batches = buckets.filter(items => items.length).map(items => ({ payload: payloadFor(items) }));
+  const payload = payloadFor(selectedRows);
+  const baselineRows = rows.filter(row => row.baselineSelected);
+  const missing = required.filter(row => !selected.has(row.candidate.candidate_id));
+  const pathRows = rows.filter(row => row.entry.associationEvidence);
+  const seeds = [...new Set(payload.candidates.map(candidate => candidate.association_context?.seed.id).filter(Boolean))]
     .map(id => inspected.get(id));
-  return { payload, fingerprint, rows: [...selected.values()], seeds,
-    coverage: { eligible_count: rows.length, selected_count: candidates.length,
-      truncated_count: rows.length - candidates.length, selected_chars: chars,
-      max_items: 24, char_budget: 12000,
-      baseline_selected_count: baselineSelectedCount,
-      baseline_covered_count: baselineCoveredCount,
-      baseline_truncated_count: baselineSelectedCount - baselineCoveredCount,
-      source_counts: Object.fromEntries(SOURCES.map((source) => [source,
-        [...selected.values()].filter((row) => row.sources.includes(source)).length])),
+  return { payload, batches, rows: selectedRows, seeds,
+    fingerprint: createHash("sha256").update(JSON.stringify(payload)).digest("hex"),
+    coverage: { eligible_count: rows.length, selected_count: selectedRows.length,
+      truncated_count: rows.length - selectedRows.length,
+      selected_chars: Math.max(0, ...batches.map(batch => JSON.stringify(buildJevRequest(batch.payload)).length)),
+      total_request_chars: batches.reduce((sum, batch) => sum + JSON.stringify(buildJevRequest(batch.payload)).length, 0),
+      batch_count: batches.length, max_batches: 3, max_items: 24, char_budget: 12000,
+      baseline_selected_count: baselineRows.length,
+      baseline_covered_count: baselineRows.filter(row => selected.has(row.candidate.candidate_id)).length,
+      baseline_truncated_count: baselineRows.filter(row => !selected.has(row.candidate.candidate_id)).length,
+      required_count: required.length, required_truncated_count: missing.length,
+      deferred_ids: missing.map(row => row.candidate.candidate_id),
+      association_required_count: pathRows.length,
+      association_covered_count: pathRows.filter(row => selected.has(row.candidate.candidate_id)).length,
+      source_counts: Object.fromEntries(SOURCES.map(source => [source,
+        selectedRows.filter(row => row.sources.includes(source)).length])),
       semantic_guard_observed: Boolean(runtime.observationGuardReason) } };
 }
 
@@ -78,5 +93,6 @@ function snapshotRow(row, runtime, trace, inspected) {
     allowed_uses: background ? ["background", "omit"] : ["supporting", "background", "omit"],
     snippet: { id: snippetId, representation: view, start: window.chunk?.start || 0,
       end: window.chunk?.end || 0, truncated: window.truncated, text: window.content } };
-  return { candidate, entry, formalAllowed: row.formalAllowed, sources, baselineSelected: Boolean(old?.final), baselineReason: old?.reason || null };
+  return { candidate, entry, formalAllowed: row.formalAllowed, sources, localEligible: old?.admission === "admit",
+    baselineSelected: Boolean(old?.final), baselineReason: old?.reason || null };
 }

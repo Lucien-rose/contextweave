@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { jevConfig, requestJevDecisions } from "../jev/client.js";
 export { jevConfig } from "../jev/client.js";
 
-export const JEV_PROMPT_VERSION = "openrouter-decisions-v3";
+export const JEV_PROMPT_VERSION = "openrouter-decisions-v4";
 const CRITERIA = {
   relevance: { useful: "The snippet supports the current subject, task and scope, or supplies applicable standing context.",
     irrelevant: "Unrelated, different subject/scope/time, or only overlapping words and broad tags.",
@@ -48,17 +48,58 @@ export function jevIdentity(config) {
     criteria: CRITERIA, association_criteria: ASSOCIATION_CRITERIA })).digest("hex");
 }
 
-export async function judgeJevCandidates(snapshot, { config = jevConfig(), fetchImpl, requireComplete = false } = {}) {
-  const { candidates } = snapshot.payload;
+export function buildJevRequest(payload) {
+  const seeds = [];
+  const seedIds = new Map();
+  const candidates = payload.candidates.map((candidate, index) => {
+    const context = candidate.association_context;
+    let association;
+    if (context) {
+      if (!seedIds.has(context.seed.id)) {
+        seedIds.set(context.seed.id, `s${seeds.length}`);
+        const { title, snippet, query_evidence } = context.seed;
+        seeds.push({ id: seedIds.get(context.seed.id), title, snippet, query_evidence });
+      }
+      association = { seed_ref: seedIds.get(context.seed.id), bridge: context.bridge };
+    }
+    return { candidate_id: `c${index}`, title: candidate.title, kind: candidate.kind,
+      event_date: candidate.event_date, protected_direct: candidate.protected_direct,
+      context_check: candidate.context_check, allowed_uses: candidate.allowed_uses,
+      snippet: candidate.snippet.text,
+      ...(candidate.requires_path_judgment ? { requires_path_judgment: true, association_context: association || null } : {}) };
+  });
   const questions = {};
   candidates.forEach((candidate, index) => {
     for (const [field, criteria] of Object.entries(criteriaFor(candidate))) {
       if (field === "context_fit" && !candidate.context_check) continue;
-      questions[`c${index}_${field}`] = { type: "choice", criteria,
-        instructions: `Follow rules. Judge ${field} of candidates[${index}] against query and query_representation. Use the supplied snippet and association_context, when present. A shared topic alone is insufficient.` };
+      questions[`c${index}_${field}`] = { type: "choice",
+        criteria: Object.fromEntries(Object.keys(criteria).map(choice => [choice, choice])),
+        instructions: `Judge c${index} using rubric.${field}; resolve seed_ref in seeds.` };
     }
   });
-  const result = await requestJevDecisions({ state: { ...snapshot.payload, rules: RULES }, questions }, { config, fetchImpl });
+  return { state: { query: payload.query, query_representation: payload.query_representation,
+    context: payload.context, intimacy_mode: payload.intimacy_mode, rules: RULES,
+    rubric: { ...CRITERIA, ...ASSOCIATION_CRITERIA }, seeds, candidates }, questions };
+}
+
+export async function judgeJevCandidates(snapshot, options = {}) {
+  if (!snapshot.batches) return judgeJevBatch(snapshot, options);
+  const decisions = [], usage = { input_tokens: 0, output_tokens: 0, cost: 0 };
+  let resolvedModel;
+  for (const batch of snapshot.batches) {
+    const result = await judgeJevBatch(batch, options);
+    decisions.push(...result.decisions);
+    for (const key of Object.keys(usage)) usage[key] += result.usage?.[key] || 0;
+    resolvedModel = result.resolvedModel;
+  }
+  return { decisions, usage, resolvedModel };
+}
+
+async function judgeJevBatch(snapshot, { config = jevConfig(), fetchImpl, requireComplete = false } = {}) {
+  const { candidates } = snapshot.payload;
+  const request = buildJevRequest(snapshot.payload);
+  const { questions } = request;
+  const result = await requestJevDecisions(request, { config, fetchImpl });
   if (requireComplete && Object.keys(questions).some(key => !result.answers[key])) throw new Error("jev-incomplete-response");
   const decisions = candidates.flatMap((candidate, index) => {
     const answers = Object.fromEntries(Object.keys(criteriaFor(candidate)).map((field) => [field, result.answers[`c${index}_${field}`]]));
