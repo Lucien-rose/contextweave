@@ -188,6 +188,11 @@ ContextWeave does not automatically read an entire host conversation archive. Th
 
 MCP tool names and compatibility variables such as `moss_*` and `MOSS_*` remain supported.
 
+Application clients can use [HTTP API v1](docs/HTTP_API_V1.md): `ingest`, `recall`
+and `evolve`, with context-checked reads and delivery receipts. Set `MOSS_RUNTIME_TOKEN`
+and run `npm run example:http` against a running backend for a synthetic end-to-end example.
+TypeScript and Python SDKs are planned after contract review.
+
 See [API](docs/API.md), [Host Integration](docs/HOST_INTEGRATION.md), [Agent Integration](docs/AGENT_INTEGRATION.md) and the schema-generated [Tools Reference](docs/TOOLS.md). Live `tools/list` is authoritative after configuration overrides.
 
 ## Documentation

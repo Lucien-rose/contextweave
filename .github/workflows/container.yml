@@ -19,6 +19,8 @@ jobs:
           docker compose up -d --wait
       - name: Exercise host integration
         run: docker compose exec -T contextweave moss example
+      - name: Exercise HTTP v1 integration
+        run: docker compose exec -T contextweave moss example-http
       - name: Verify restart persistence
         run: |
           credentials=$(docker compose exec -T contextweave sha256sum data/config/tokens.env data/config/models.key)

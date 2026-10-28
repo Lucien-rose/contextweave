@@ -1,5 +1,6 @@
 # Backend API
 
+The versioned application contract is documented in [HTTP API v1](HTTP_API_V1.md).
 Legacy HTTP `/api/` routes use the admin Bearer token. MCP is split into the agent-facing
 `/mcp/runtime` surface and the operator-facing `/mcp/admin` surface. The combined `/mcp`
 endpoint remains as a deprecated compatibility route and requires the admin token. `/health`
@@ -11,7 +12,8 @@ The API is single-owner; a multi-user host must isolate databases and credential
 | `POST /mcp/runtime` | `MOSS_RUNTIME_TOKEN`; admin token also accepted | Preferred agent integration |
 | `POST /mcp/admin` | `MOSS_ADMIN_TOKEN` | Preferred operator integration |
 | `POST /mcp` | `MOSS_ADMIN_TOKEN` | Deprecated combined compatibility surface |
-| `/api/*` | `MOSS_ADMIN_TOKEN` | Existing owner API; stable `/api/v1` contract is a separate migration |
+| `/api/v1/*` | Runtime or admin, per operation | Versioned application API; see [contract](HTTP_API_V1.md) |
+| Other `/api/*` | `MOSS_ADMIN_TOKEN` | Existing owner API |
 | `GET /health` | none | Health and version only |
 
 If `MOSS_RUNTIME_TOKEN` is omitted, the runtime endpoint uses the admin token for backward-compatible deployment. See [MCP surfaces](MCP_SURFACES.md) for the tool boundary and migration policy.
@@ -31,7 +33,8 @@ If `MOSS_RUNTIME_TOKEN` is omitted, the runtime endpoint uses the admin token fo
 | Health | `GET /api/health/{status,runs}`, `POST /api/health/run` | `VECTOR_AND_HEALTH.md` |
 | Vector migration | `/api/vector/migration/*` | `VECTOR_AND_HEALTH.md` |
 | Atlas/entities/relations | `/api/arcs`, `/api/entities`, `/api/relations` | Respective domain `contract.js` files |
-| Local import | CLI: `npm run memory:import -- FILE.json --db DATABASE` | `MEMORY_IMPORT.md`; no remote upload endpoint |\n| Export | `GET /api/export` | Owner JSON export; use snapshot CLI for restore |
+| Local import | CLI: `npm run memory:import -- FILE.json --db DATABASE` | `MEMORY_IMPORT.md`; no remote upload endpoint |
+| Export | `GET /api/export` | Owner JSON export; use snapshot CLI for restore |
 
 Method and payload details live in the linked contract modules rather than a second
 handwritten schema. Inspect MCP `tools/list` for the exact current tool schema.
