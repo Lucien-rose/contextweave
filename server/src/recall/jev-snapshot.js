@@ -2,12 +2,15 @@ import { createHash } from "node:crypto";
 import { isBackgroundEntry } from "./background.js";
 import { assignRecallSemantics } from "./tiering.js";
 import { relevantChunk } from "./chunks.js";
+import { associationContext } from "./association-context.js";
 
 const SOURCES = ["soft-rejected", "raw", "fts", "situation", "vector", "entity", "association"];
 
 export function buildJevSnapshot({ runtime, entries }, baseline, input) {
   const trace = new Map(baseline.trace.candidates.map((item) => [item.id, item]));
-  const rows = entries.map((row) => snapshotRow(row, runtime, trace)).filter(Boolean);
+  const inspected = new Map(entries.filter(row => row.formalAllowed)
+    .map(({ entry }) => [entry.memory.id, entry.memory]));
+  const rows = entries.map((row) => snapshotRow(row, runtime, trace, inspected)).filter(Boolean);
   const queues = SOURCES.map((source) => rows.filter((row) => row.sources.includes(source)));
   const selected = new Map();
   let chars = 2;
@@ -28,11 +31,13 @@ export function buildJevSnapshot({ runtime, entries }, baseline, input) {
   const candidates = [...selected.values()].map((row) => row.candidate);
   const baselineSelectedCount = rows.filter(({ baselineSelected }) => baselineSelected).length;
   const baselineCoveredCount = [...selected.values()].filter(({ baselineSelected }) => baselineSelected).length;
-  const payload = { schema_version: "jev-candidates-v1", query: input.query,
+  const payload = { schema_version: "jev-candidates-v2", query: input.query,
     query_representation: runtime.queryContext.facets || runtime.queryContext.contextEnvelope || null,
     context: input.context || "general", intimacy_mode: input.intimacyMode || "off", candidates };
   const fingerprint = createHash("sha256").update(JSON.stringify(payload)).digest("hex");
-  return { payload, fingerprint, rows: [...selected.values()],
+  const seeds = [...new Set(candidates.map(candidate => candidate.association_context?.seed.id).filter(Boolean))]
+    .map(id => inspected.get(id));
+  return { payload, fingerprint, rows: [...selected.values()], seeds,
     coverage: { eligible_count: rows.length, selected_count: candidates.length,
       truncated_count: rows.length - candidates.length, selected_chars: chars,
       max_items: 24, char_budget: 12000,
@@ -44,7 +49,7 @@ export function buildJevSnapshot({ runtime, entries }, baseline, input) {
       semantic_guard_observed: Boolean(runtime.observationGuardReason) } };
 }
 
-function snapshotRow(row, runtime, trace) {
+function snapshotRow(row, runtime, trace, inspected) {
   const { entry } = row;
   const memory = entry.memory;
   const sources = [];
@@ -67,6 +72,8 @@ function snapshotRow(row, runtime, trace) {
     title: memory.title.slice(0, 160), kind: memory.kind, status: memory.status,
     family_key: memory.family_key, event_date: memory.event_date,
     protected_direct: entry.rawDirectEvidence,
+    ...(entry.associationEvidence ? { association_context: associationContext(entry, runtime, inspected),
+      requires_path_judgment: true } : {}),
     context_check: memory.sensitivity === "intimate" && runtime.context === "private" && ["model", "proactive"].includes(runtime.intimacyMode),
     allowed_uses: background ? ["background", "omit"] : ["supporting", "background", "omit"],
     snippet: { id: snippetId, representation: view, start: window.chunk?.start || 0,

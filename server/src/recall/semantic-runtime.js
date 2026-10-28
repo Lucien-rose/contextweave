@@ -40,9 +40,11 @@ export async function runSemanticRecall(db, input, baseline, dependencies = {}) 
   }
   try {
     const judged = await (dependencies.judge || judgeJevCandidates)(snapshot, { config, fetchImpl: dependencies.fetchImpl, requireComplete: true });
-    if (!snapshot.rows.every(({ entry }) => {
-      const current = getMemory(db, entry.memory.id);
-      return current && current.content_hash === entry.memory.content_hash && current.updated_at === entry.memory.updated_at;
+    const snapshotMemories = [...snapshot.rows.map(({ entry }) => entry.memory), ...snapshot.seeds];
+    if (!snapshotMemories.every(memory => {
+      const current = getMemory(db, memory.id);
+      return current && current.content_hash === memory.content_hash && current.updated_at === memory.updated_at
+        && current.version === memory.version && current.status === memory.status;
     })) throw new Error("stale-snapshot");
     decisions = new Map(judged.decisions.map(decision => [decision.candidate_id, decision]));
     Object.assign(status, { recall_path: mode === "on" ? "jev" : "local", jev_status: mode === "on" ? "applied" : "observed", fallback_used: false });

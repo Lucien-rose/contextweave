@@ -1,4 +1,5 @@
 import { applySemanticDecisions } from "./semantic.js";
+import { guardAssociations } from "./association-context.js";
 import { defaults } from "../defaults.js";
 import { selectRecallCandidates } from "./selection.js";
 import { buildRecallResult, buildSuppressedRecallResult } from "./result.js";
@@ -125,6 +126,7 @@ export function recallMemoriesWithTrace(repository, {
 
   if (captureOnly) return { memories: [], background_memories: [], trace: { candidates: traceCandidates } };
   markPhase("candidate_scoring");
+  scored = guardAssociations(scored, observed, semanticDecisions, traceCandidates);
   const localFallback = !semanticDecisions || scored.some(entry => !semanticDecisions.has(entry.memory.id));
   const contextualTail = localFallback ? applyContextualTail(scored, traceCandidates) : { scored, floor: null };
   scored = contextualTail.scored;

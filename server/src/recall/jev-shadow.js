@@ -4,6 +4,7 @@ import { buildJevSnapshot } from "./jev-snapshot.js";
 import { JEV_PROMPT_VERSION, jevConfig, jevIdentity, judgeJevCandidates } from "./jev-provider.js";
 import { selectRecallCandidates } from "./selection.js";
 import { compareMemoryIds } from "./ranking.js";
+import { applySemanticDecisions } from "./semantic.js";
 
 // Explicit diagnostics only. No model output enters the ordinary recall path.
 export async function recallWithJevShadow(db, input = {}, dependencies = {}) {
@@ -29,7 +30,8 @@ export async function recallWithJevShadow(db, input = {}, dependencies = {}) {
       try {
         const judged = await judgeJevCandidates(snapshot, { ...dependencies, config });
         report.provider_ms = elapsed(providerStart);
-        if (!snapshot.rows.every(({ entry }) => unchanged(db, entry.memory))) throw new Error("jev-stale-snapshot");
+        if (![...snapshot.rows.map(({ entry }) => entry.memory), ...snapshot.seeds]
+          .every(memory => unchanged(db, memory))) throw new Error("jev-stale-snapshot");
         const decisions = new Map(judged.decisions.map((decision) => [decision.candidate_id, decision]));
         const simulated = simulateSelection(db, input, captured, snapshot, diagnostic, decisions);
         Object.assign(report, { status: "observed", usage: judged.usage, resolved_model: judged.resolvedModel,
@@ -57,26 +59,8 @@ export async function recallWithJevShadow(db, input = {}, dependencies = {}) {
 
 function simulateSelection(db, input, captured, snapshot, baseline, decisions) {
   const oldIds = new Set(baseline.trace.final_ids);
-  const candidates = new Map(snapshot.rows.map(({ candidate }) => [candidate.candidate_id, candidate]));
-  const selected = [];
-  for (const { entry } of captured.entries) {
-    const id = entry.memory.id;
-    const decision = decisions.get(id);
-    if (entry.rawDirectEvidence) {
-      if (oldIds.has(id)) selected.push(entry);
-      continue;
-    }
-    const candidate = candidates.get(id);
-    const uncertain = !decision || decision.relevance === "uncertain"
-      || (candidate?.context_check && decision.context_fit === "uncertain");
-    if (!candidates.has(id) || uncertain) {
-      if (oldIds.has(id)) selected.push(entry);
-      continue;
-    }
-    if (decision.relevance !== "useful" || decision.use === "omit"
-      || (candidate.context_check && decision.context_fit !== "appropriate")) continue;
-    selected.push({ ...entry, semanticDecision: true, semanticPriority: decision.priority });
-  }
+  const baselineEntries = captured.entries.map(row => row.entry).filter(entry => oldIds.has(entry.memory.id));
+  const selected = applySemanticDecisions(captured.entries, baselineEntries, decisions);
   const compare = (a, b) => Number(b.rawDirectEvidence) - Number(a.rawDirectEvidence)
     || (Number(b.semanticPriority) || 0) - (Number(a.semanticPriority) || 0)
     || compareMemoryIds(a.memory, b.memory);
