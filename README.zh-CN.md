@@ -3,7 +3,7 @@
 **面向 AI Agent 的长期记忆基础设施。**
 
 [![CI](https://github.com/Lucien-rose/contextweave/actions/workflows/ci.yml/badge.svg)](https://github.com/Lucien-rose/contextweave/actions/workflows/ci.yml)
-![Core](https://img.shields.io/badge/Core-1.2.0-234f46)
+![Core](https://img.shields.io/badge/Core-1.3.0-234f46)
 ![Node](https://img.shields.io/badge/Node-%E2%89%A524-339933?logo=node.js&logoColor=white)
 [![License](https://img.shields.io/badge/License-Apache--2.0-234f46)](LICENSE)
 
@@ -211,7 +211,7 @@ ContextWeave 不会自动读取宿主的完整聊天档案。宿主负责提交�
 
 这是可独立部署的公开后端发行版，不包含真实个人记忆、预填充画像、私有前端与应用代码、私人 Skill、生产凭证、部署密钥或原始私人仓库历史。
 
-详见 [开源边界](docs/public-boundary.md)。当前 Core 版本为 **1.2.0**；[版本说明](RELEASE_NOTES.md) 记录发布范围，[发布验收](RELEASE_VALIDATION.md) 记录验证情况。
+详见 [开源边界](docs/public-boundary.md)。当前 Core 版本为 **1.3.0**；[1.3.0 发布记录](docs/RELEASE_1.3.0.md)包含发布范围与验证结果，旧版本记录仍保留在仓库历史中。
 
 ## 许可证与署名
 
