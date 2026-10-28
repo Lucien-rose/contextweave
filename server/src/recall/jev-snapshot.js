@@ -17,7 +17,7 @@ export function buildJevSnapshot({ runtime, entries }, baseline, input) {
     context: input.context || "general", intimacy_mode: input.intimacyMode || "off",
     candidates: batchRows.map(row => row.candidate) });
   const sizeOf = batchRows => JSON.stringify(buildJevRequest(payloadFor(batchRows))).length;
-  const required = rows.filter(row => row.baselineSelected || row.localEligible || row.entry.associationEvidence)
+  const required = rows.filter(row => row.baselineSelected || row.entry.associationEvidence)
     .sort((a, b) => Number(b.baselineSelected) - Number(a.baselineSelected)
       || (a.entry.associationRank || Infinity) - (b.entry.associationRank || Infinity));
   const buckets = [[]], selected = new Map();
@@ -33,7 +33,9 @@ export function buildJevSnapshot({ runtime, entries }, baseline, input) {
     selected.set(row.candidate.candidate_id, row);
   };
   for (const row of required) add(row, true);
-  const queues = SOURCES.map(source => rows.filter(row => row.sources.includes(source)));
+  const exploratory = [...rows].sort((a, b) => Number(b.localEligible) - Number(a.localEligible)
+    || b.entry.discoveryScore - a.entry.discoveryScore);
+  const queues = SOURCES.map(source => exploratory.filter(row => row.sources.includes(source)));
   for (let position = 0; position < rows.length; position += 1) {
     for (const queue of queues) add(queue[position], false);
   }

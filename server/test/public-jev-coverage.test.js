@@ -8,6 +8,7 @@ import { recallMemoriesWithTrace } from "../src/recall/sqlite.js";
 import { buildJevSnapshot } from "../src/recall/jev-snapshot.js";
 import { buildJevRequest, judgeJevCandidates } from "../src/recall/jev-provider.js";
 import { runSemanticRecall } from "../src/recall/semantic-runtime.js";
+import { prepareQueryContext } from "../src/recall/query-representation.js";
 
 function fixture(t) {
   const directory = mkdtempSync(join(tmpdir(), "moss-coverage-"));
@@ -39,6 +40,8 @@ test("crowded multi-source candidates cannot starve a hidden-seed T2 before judg
   assert.equal(plan.coverage.association_required_count, 1);
   assert.equal(plan.coverage.association_covered_count, 1);
   assert.ok(plan.rows.some(row => row.candidate.candidate_id === "zz:target"));
+  assert.equal(plan.coverage.required_count, plan.coverage.baseline_selected_count + 1);
+  assert.equal(plan.batches.length, 1);
   const result = await runSemanticRecall(db, input, baseline, { config: { available: true },
     judge: async plan => ({ decisions: plan.rows.map(({ candidate }) => ({ candidate_id: candidate.candidate_id,
       relevance: candidate.candidate_id === "zz:target" ? "useful" : "irrelevant", use: "supporting",
@@ -48,6 +51,47 @@ test("crowded multi-source candidates cannot starve a hidden-seed T2 before judg
     unexpected: result.trace.candidates.filter(row => row.final && row.id !== "zz:target"),
   }));
   assert.equal(result.memories[0].recall_tier, "T2");
+});
+
+test("event time and revision lifecycle are independent; explicit raw version intent wins", () => {
+  const query = "之前那个顺藤摸瓜找到其他记忆的功能，当时有哪些边界？";
+  const past = prepareQueryContext(query, { temporal: { state_scope: "historical" } });
+  assert.deepEqual(past.recallPlan.candidate_statuses, ["active", "superseded"]);
+  assert.equal(past.recallPlan.state_scope, "current");
+  assert.equal(past.recallPlan.historical_intent, false);
+  const old = prepareQueryContext(query, { temporal: { state_scope: "historical", version_scope: "superseded" } });
+  assert.deepEqual(old.recallPlan.candidate_statuses, ["superseded"]);
+  const explicit = prepareQueryContext("旧版本的方案是什么？", { temporal: { state_scope: "current", version_scope: "active" } });
+  assert.deepEqual(explicit.recallPlan.candidate_statuses, ["superseded"]);
+});
+
+test("low-probability winners abstain independently for relevance, path and utility", async () => {
+  const candidate = { candidate_id: "target", title: "Associated event", allowed_uses: ["supporting", "background", "omit"],
+    requires_path_judgment: true, association_context: { seed: { id: "seed", title: "Trail", snippet: "Winding route" }, bridge: { cue: "route" } },
+    snippet: { id: "pinned", text: "A cabin beside the lake" } };
+  const payload = { query: "Remember the winding trail", candidates: [candidate] };
+  const request = buildJevRequest(payload);
+  assert.equal(Object.keys(request.questions).length, 3);
+  assert.match(request.questions.c0_path_fit.criteria.coherent, /requested operation and property/);
+  for (const weak of [null, "relevance", "path_fit", "answer_utility"]) {
+    const result = await judgeJevCandidates({ payload }, {
+      config: { baseUrl: "https://example.invalid", apiKey: "test", model: "test", timeoutMs: 1000 },
+      fetchImpl: async () => {
+        const answers = Object.fromEntries(Object.entries(request.questions).map(([key, question]) => {
+          const choice = key.endsWith("path_fit") ? "coherent" : key.endsWith("relevance") ? "useful" : "material";
+          const options = Object.keys(question.criteria);
+          const probability = key === `c0_${weak}` ? .6 : 1;
+          return [key, { type: "choice", choice, probabilities: Object.fromEntries(options.map(option =>
+            [option, option === choice ? probability : (1 - probability) / (options.length - 1)])) }];
+        }));
+        return Response.json({ answers, model: "test", usage: { input_tokens: 1, output_tokens: 1 } });
+      },
+    });
+    const decision = result.decisions[0];
+    if (weak === "path_fit") assert.equal(decision.path_fit, "uncertain");
+    else assert.equal(decision.use, weak ? "omit" : "supporting");
+    assert.deepEqual(decision.support_refs, weak && weak !== "path_fit" ? [] : ["pinned"]);
+  }
 });
 
 test("over-budget required paths are explicitly deferred while every scheduled request stays bounded", async t => {
@@ -76,6 +120,7 @@ test("past-event wording retains vector candidates in both recall and the model 
   for (const query of ["之前那次我们探索的小屋，当时有什么故事？", "那次我们探索的小屋，有什么故事？"]) {
     let captured;
     const result = baseline({ ...input, query, associationRecall: null,
+      queryRepresentation: { temporal: { state_scope: "historical" } },
       vectorRecall: { enabled: true, mode: "on", items: [{ id: "zz:target", qualified: true, rank: 1, similarity: .8 }] },
       captureCandidates: value => { captured = value; } });
     assert.ok(result.memories.some(row => row.id === "zz:target"));
@@ -115,4 +160,3 @@ test("wire format deduplicates seeds, keeps local evidence pins and covers every
   assert.ok(result.decisions.every(row => row.support_refs.length === 1));
   assert.equal(input.recordRecall, false);
 });
-

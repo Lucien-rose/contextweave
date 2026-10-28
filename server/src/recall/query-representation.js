@@ -23,7 +23,10 @@ export const queryRepresentationSchema = z.object({
   emotional_facets: facets,
   state_cues: facets,
   temporal: z.object({
-    state_scope: z.enum(["current", "historical", "current-and-history"]).optional(),
+    state_scope: z.enum(["current", "historical", "current-and-history"]).optional()
+      .describe("Time of the requested events or facts; historical does not imply a superseded memory revision."),
+    version_scope: z.enum(["active", "superseded", "all"]).optional()
+      .describe("Memory revision lifecycle, independent of event time. Use superseded only when the user requests a replaced version."),
     as_of: z.iso.date().optional(),
   }).strict().optional(),
   recall_hypotheses: z.array(z.string().trim().min(1).max(500)).max(3).default([]),
@@ -44,10 +47,15 @@ export function prepareQueryContext(query, representation, contextEnvelope) {
   } : contextEnvelope;
   const recallPlan = resolveHistoricalRoute(query);
   const scope = facets?.temporal?.state_scope;
-  const plan = !recallPlan.historical_intent && scope && scope !== "current"
-    ? { ...recallPlan, state_scope: scope, historical_reference: true, historical_intent: true,
-        compare_current: scope === "current-and-history",
-        candidate_statuses: scope === "historical" ? ["superseded"] : ["active", "superseded"],
+  const versionScope = facets?.temporal?.version_scope;
+  const plan = !recallPlan.historical_intent && (versionScope || (scope && scope !== "current"))
+    ? { ...recallPlan, event_scope: scope || "current",
+        state_scope: versionScope === "superseded" ? "historical"
+          : versionScope === "all" ? "current-and-history" : recallPlan.state_scope,
+        historical_reference: true, historical_intent: ["superseded", "all"].includes(versionScope),
+        compare_current: versionScope === "all",
+        candidate_statuses: versionScope === "superseded" ? ["superseded"]
+          : versionScope === "active" ? ["active"] : ["active", "superseded"],
         reason: "host-inferred-temporal-scope" }
     : recallPlan;
   return {
@@ -68,6 +76,7 @@ export function queryContextTrace(prepared) {
     topic_count: prepared.envelope.topics.length,
     hypothesis_count: prepared.envelope.hypothesisCount,
     temporal_scope: prepared.recallPlan.state_scope,
+    event_scope: prepared.facets?.temporal?.state_scope || "current",
     graph_expansion: "explicit-tool-only",
   };
 }
