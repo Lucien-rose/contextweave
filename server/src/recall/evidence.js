@@ -34,10 +34,19 @@ export function scoreMemoryDetailed(memory, rawQuery, {
   let direct = false;
   let explicit = false;
   let strongDirect = false;
+  const matches = [];
 
-  if (query && title === query) { score += 30; matched = true; direct = true; explicit = true; strongDirect = true; }
-  else if (containsText(title, query)) { score += 18; matched = true; direct = true; explicit = true; strongDirect = true; }
-  if (containsText(content, query)) { score += 14; matched = true; direct = true; explicit = true; strongDirect = true; }
+  if (query && title === query) {
+    score += 30; matched = true; direct = true; explicit = true; strongDirect = true;
+    matches.push({ kind: "exact-title", term: query });
+  } else if (containsText(title, query)) {
+    score += 18; matched = true; direct = true; explicit = true; strongDirect = true;
+    matches.push({ kind: "title-phrase", term: query });
+  }
+  if (containsText(content, query)) {
+    score += 14; matched = true; direct = true; explicit = true; strongDirect = true;
+    matches.push({ kind: "body-phrase", term: query });
+  }
   if (memory.sensitivity === "intimate" && INTIMATE_CATEGORY_QUERIES.some((cue) => query.includes(cue))) {
     score += 8;
     matched = true;
@@ -69,6 +78,7 @@ export function scoreMemoryDetailed(memory, rawQuery, {
   }
 
   if (dateCueMatches(query, memory.event_date)) {
+    matches.push({ kind: "date", term: memory.event_date });
     score += 24;
     matched = true;
     direct = true;
@@ -78,6 +88,7 @@ export function scoreMemoryDetailed(memory, rawQuery, {
 
   const semanticAliases = scoreSemanticAliases(memory, query);
   if (semanticAliases.matched) {
+    matches.push({ kind: "concept-alias" });
     score += semanticAliases.score;
     matched = true;
     // Concept aliases are discovery hints. They never prove that the memory
@@ -86,6 +97,7 @@ export function scoreMemoryDetailed(memory, rawQuery, {
 
   const fuzzyCue = allowFuzzy ? fuzzyMetadataCue(memory, query) : null;
   if (!matched && fuzzyCue) {
+    matches.push({ kind: "fuzzy-metadata", term: fuzzyCue });
     score += 6;
     matched = true;
     // Spelling similarity discovers candidates; it never establishes authority.
@@ -95,6 +107,7 @@ export function scoreMemoryDetailed(memory, rawQuery, {
   const atomHits = new Set();
   for (const atom of prepared.atoms) {
     if (!containsText(canonicalHaystack, atom)) continue;
+    matches.push({ kind: "atom", term: atom });
     score += atom.length >= 4 ? 6 : atom.length === 3 ? 4 : 3;
     atomHits.add(atom);
     matched = true;
@@ -106,6 +119,7 @@ export function scoreMemoryDetailed(memory, rawQuery, {
   for (const term of prepared.words) {
     if (atomHits.has(term)) continue;
     if (!haystackWords.has(term)) continue;
+    matches.push({ kind: "word", term });
     score += term.length >= 4 ? 4 : 3;
     wordHits.add(term);
     matched = true;
@@ -116,11 +130,12 @@ export function scoreMemoryDetailed(memory, rawQuery, {
   const fragmentsMayScore = prepared.fragmentsMayStart || matched || allowFragmentOnly;
   for (const term of queryTerms) {
     if (fragmentsMayScore && haystackTerms.has(term)) {
+      matches.push({ kind: "fragment", term });
       score += term.length >= 4 ? 4 : term.length === 3 ? 3 : 1;
       matched = true;
     }
   }
-  return { score: matched ? score : 0, direct, explicit, strongDirect };
+  return { score: matched ? score : 0, direct, explicit, strongDirect, matches };
 }
 
 

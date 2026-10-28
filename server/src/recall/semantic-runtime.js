@@ -25,9 +25,13 @@ export async function runSemanticRecall(db, input, baseline, dependencies = {}) 
     captureCandidates: value => { captured = value; } });
   if (!captured) return deliver(prepared);
   const runtime = captured.runtime;
-  const finish = semanticDecisions => recallMemoriesWithTrace(runtime.repository, {
+  const finish = semanticDecisions => {
+    const result = recallMemoriesWithTrace(runtime.repository, {
     ...input, preparedQuery: runtime.queryContext, vectorRecall: runtime.vectorResult,
     associationRecall: runtime.associationResult, semanticDecisions });
+    result.trace.semantic_coverage = snapshot.coverage;
+    return result;
+  };
   const snapshot = buildJevSnapshot(captured, prepared, input);
   let decisions = null;
   if (!snapshot.rows.length) {
@@ -40,12 +44,19 @@ export async function runSemanticRecall(db, input, baseline, dependencies = {}) 
   }
   try {
     const judged = await (dependencies.judge || judgeJevCandidates)(snapshot, { config, fetchImpl: dependencies.fetchImpl, requireComplete: true });
-    if (!snapshot.rows.every(({ entry }) => {
-      const current = getMemory(db, entry.memory.id);
-      return current && current.content_hash === entry.memory.content_hash && current.updated_at === entry.memory.updated_at;
+    const snapshotMemories = [...snapshot.rows.map(({ entry }) => entry.memory), ...snapshot.seeds];
+    if (!snapshotMemories.every(memory => {
+      const current = getMemory(db, memory.id);
+      return current && current.content_hash === memory.content_hash && current.updated_at === memory.updated_at
+        && current.version === memory.version && current.status === memory.status;
     })) throw new Error("stale-snapshot");
     decisions = new Map(judged.decisions.map(decision => [decision.candidate_id, decision]));
+    for (const id of snapshot.coverage.deferred_ids) decisions.set(id, { coverage: "deferred" });
     Object.assign(status, { recall_path: mode === "on" ? "jev" : "local", jev_status: mode === "on" ? "applied" : "observed", fallback_used: false });
+    if (snapshot.coverage.required_truncated_count) status.jev_status = "partial";
+    Object.assign(status, { usage: judged.usage, batch_count: snapshot.coverage.batch_count,
+      required_count: snapshot.coverage.required_count,
+      deferred_count: snapshot.coverage.required_truncated_count });
   } catch (error) {
     Object.assign(status, { jev_status: error.message === "stale-snapshot" ? "stale-snapshot"
       : error.name === "TimeoutError" ? "timeout" : "provider-failed", incident_id: randomUUID() });

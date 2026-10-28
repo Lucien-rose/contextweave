@@ -65,6 +65,11 @@ export async function requestJevDecisions({ state, questions }, { config = jevCo
       || Object.keys(criteria).some((option) => !Object.hasOwn(answer.probabilities, option))) {
       throw new Error("jev-invalid-decision-answer");
     }
+    const probabilities = Object.values(answer.probabilities);
+    if (Math.abs(probabilities.reduce((sum, value) => sum + value, 0) - 1) > 0.01
+      || answer.probabilities[answer.choice] < Math.max(...probabilities)) {
+      throw new Error("jev-invalid-decision-answer");
+    }
   }
   return result;
 }

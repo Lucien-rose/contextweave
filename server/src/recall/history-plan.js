@@ -11,7 +11,7 @@ export const HISTORICAL_ROUTE_SCHEMA = "historical-route-v1";
 export function historicalSuppressionReason(plan, memory, historicalFamilyKeys, {
   contextualMatch = true, canonicalMatchReason = "",
 } = {}) {
-  if (!plan.historical_reference || plan.historical_intent || memory.status !== "active") return null;
+  if (!plan.superseded_state_reference || plan.historical_intent || memory.status !== "active") return null;
   if (historicalFamilyKeys.has(memory.family_key)) return "historical-state-unrequested";
   if (!contextualMatch && canonicalMatchReason === "semantic-overlap") {
     return "nominal-historical-weak-match";
@@ -56,11 +56,12 @@ export function resolveHistoricalRoute(rawQuery) {
     schema_version: HISTORICAL_ROUTE_SCHEMA,
     state_scope: "current",
     historical_reference: historicalReference,
+    superseded_state_reference: supersededStateIntent,
     historical_intent: false,
     compare_current: false,
     candidate_statuses: Object.freeze(["active"]),
     reason: historicalReference
-      ? "historical-reference-without-information-request"
+      ? supersededStateIntent ? "historical-reference-without-information-request" : "event-recollection"
       : "default-current-state",
   });
 }
