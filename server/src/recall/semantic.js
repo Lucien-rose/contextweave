@@ -1,5 +1,12 @@
 import { associationDecision } from "./association-context.js";
 
+export function directAnswerDisposition(entry, decision) {
+  if (!entry.rawDirectEvidence) return null;
+  if (!decision) return "unjudged";
+  return ["material", "background", "none", "uncertain"].includes(decision.answer_utility)
+    ? decision.answer_utility : "unjudged";
+}
+
 export function applySemanticDecisions(observed, baseline, decisions) {
   const local = new Map(baseline.map(entry => [entry.memory.id, entry]));
   const selected = [];
@@ -8,7 +15,11 @@ export function applySemanticDecisions(observed, baseline, decisions) {
     const decision = decisions.get(id);
     if (associationDecision(entry, decision)) continue;
     if (entry.rawDirectEvidence && local.has(id)) {
-      selected.push(local.get(id));
+      const disposition = directAnswerDisposition(entry, decision);
+      if (disposition === "none") continue;
+      selected.push(["unjudged", "uncertain"].includes(disposition) ? local.get(id) : { ...local.get(id),
+        semanticDecision: true, semanticPriority: decision.priority,
+        semanticBackground: disposition === "background" });
       continue;
     }
     if (!decision) continue;

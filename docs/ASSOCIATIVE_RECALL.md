@@ -25,6 +25,14 @@ at least 0.75 (`admissionProbability`). Association path-fit choices retain the
 stricter 0.8 minimum (`associationProbability`); lower-confidence choices become
 uncertain. These defaults come from a bounded production calibration sample and
 are not a universal accuracy guarantee.
+
+Direct evidence remains local identity authority and the fallback when Jev is
+unavailable. After a complete judgment, answer utility governs only its use in
+the current response: `material` stays in the main lane, `background` moves to
+the background lane, and a confident `none` is withheld with
+`direct-no-answer-utility`. `uncertain` preserves the direct result. This never
+changes the stored memory, tier authority or discovery policy.
+
 It budgets the serialized state and questions together, up to 24 candidates and
 12,000 characters per batch, at most three sequential batches per recall.
 No database migration or persistent relation is needed. Seed revisions invalidate in-flight judgments just as

@@ -122,6 +122,35 @@ test("calibrated admission keeps useful evidence at 0.75 while association paths
   assert.equal(weakRelevance.use, "omit");
 });
 
+test("direct identity stays protected while answer utility controls its use for this question", t => {
+  const { baseline } = fixture(t);
+  const recall = answerUtility => baseline({
+    query: "Navigation notebook", context: "private", intimacyMode: "off",
+    allowRepeat: true, recordRecall: false, shadowMode: "off",
+    semanticDecisions: new Map([["seed", {
+      relevance: "useful", use: answerUtility === "none" ? "omit" : "supporting",
+      context_fit: "appropriate", priority: 2, answer_utility: answerUtility,
+    }]]),
+  });
+  const material = recall("material");
+  assert.equal(material.memories[0]?.id, "seed");
+  assert.equal(material.memories[0]?.recall_tier, "T0");
+
+  const background = recall("background");
+  assert.deepEqual(background.memories, []);
+  assert.equal(background.background_memories[0]?.id, "seed");
+
+  const unsupported = recall("none");
+  assert.deepEqual(unsupported.memories, []);
+  const trace = unsupported.trace.candidates.find(row => row.id === "seed");
+  assert.equal(trace.reason, "direct-no-answer-utility");
+  assert.deepEqual(trace.direct_answer_judgment, { answer_utility: "none" });
+
+  const uncertain = recall("uncertain");
+  assert.equal(uncertain.memories[0]?.id, "seed");
+  assert.equal(uncertain.memories[0]?.recall_tier, "T0");
+});
+
 test("over-budget required paths are explicitly deferred while every scheduled request stays bounded", async t => {
   const { db, input, baseline, snapshot } = fixture(t);
   for (let i = 0; i < 45; i++) {

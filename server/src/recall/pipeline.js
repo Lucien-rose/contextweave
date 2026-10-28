@@ -1,4 +1,4 @@
-import { applySemanticDecisions } from "./semantic.js";
+import { applySemanticDecisions, directAnswerDisposition } from "./semantic.js";
 import { guardAssociations } from "./association-context.js";
 import { defaults } from "../defaults.js";
 import { selectRecallCandidates } from "./selection.js";
@@ -135,12 +135,22 @@ export function recallMemoriesWithTrace(repository, {
   scored = relativeTail.scored;
   const relativeRelevanceFloor = relativeTail.floor;
   if (semanticDecisions) {
+    const eligible = new Set(scored.map(entry => entry.memory.id));
+    const directDispositions = new Map(observed.filter(({ entry }) => entry.rawDirectEvidence && eligible.has(entry.memory.id))
+      .map(({ entry }) => [entry.memory.id, directAnswerDisposition(entry, semanticDecisions.get(entry.memory.id))]));
     scored = applySemanticDecisions(observed, scored, semanticDecisions);
     const chosen = new Map(scored.filter(entry => entry.semanticDecision).map(entry => [entry.memory.id, entry]));
-    for (const candidate of traceCandidates) if (chosen.has(candidate.id)) {
-      candidate.local_admission = candidate.admission; candidate.local_reason = candidate.reason;
-      candidate.admission = "admit";
-      candidate.reason = chosen.get(candidate.id).semanticBackground ? "jev-background" : "jev-supporting";
+    for (const candidate of traceCandidates) {
+      const directDisposition = directDispositions.get(candidate.id);
+      if (directDisposition) candidate.direct_answer_judgment = { answer_utility: directDisposition };
+      if (directDisposition === "none") {
+        candidate.local_admission = candidate.admission; candidate.local_reason = candidate.reason;
+        candidate.admission = "suppress"; candidate.reason = "direct-no-answer-utility";
+      } else if (chosen.has(candidate.id)) {
+        candidate.local_admission = candidate.admission; candidate.local_reason = candidate.reason;
+        candidate.admission = "admit";
+        candidate.reason = chosen.get(candidate.id).semanticBackground ? "jev-background" : "jev-supporting";
+      }
     }
   }
   scored.sort(compareScored);
