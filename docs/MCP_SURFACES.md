@@ -41,4 +41,4 @@ Ordinary conversation bootstrap and recall are absent. Operators that also need 
 
 ## Compatibility policy
 
-The split changes tool discovery, not stored data or domain behavior. All three surfaces call the same domain services and SQLite authority. Existing clients may remain on `/mcp` while migrating, but new examples and SDKs must target an explicit surface. The future stable HTTP API will follow the same runtime/admin boundary.
+The split changes tool discovery, not stored data or domain behavior. All three surfaces call the same domain services and SQLite authority. Existing clients may remain on `/mcp` while migrating, but new examples and SDKs must target an explicit surface. [HTTP API v1](HTTP_API_V1.md) follows the same runtime/admin boundary.

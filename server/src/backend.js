@@ -13,6 +13,7 @@ import { createMemoryApiRouter } from "./admin/routes/memory-api.js";
 import { startMaintenance } from "./maintenance.js";
 import { json } from "./admin/http.js";
 import { VERSION } from "./version.js";
+import { createV1Router } from "./api/v1/http.js";
 
 export function createBackend({
   databasePath,
@@ -25,8 +26,11 @@ export function createBackend({
   const { db } = openDatabase(databasePath);
   const stop = startMaintenance(db);
   const app = express();
-  const router = createMemoryApiRouter({ db, memoryCore: createMemoryCore(db), continuityCore: createContinuityCore(db) });
+  const core = createMemoryCore(db);
+  const router = createMemoryApiRouter({ db, memoryCore: core, continuityCore: createContinuityCore(db) });
   app.get("/health", (_req, res) => res.json({ ok: true, version: VERSION }));
+  app.use("/api/v1", createV1Router({ db, core, authenticate: req =>
+    authorized(req, [adminToken]) ? "admin" : authorized(req, [runtimeToken]) ? "runtime" : null }));
   app.use((req, res, next) => {
     const accepted = req.path === "/mcp/runtime" ? [runtimeToken, adminToken] : [adminToken];
     if (!authorized(req, accepted)) return json(res, 401, { error: "Unauthorized" });

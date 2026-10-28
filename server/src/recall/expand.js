@@ -54,6 +54,7 @@ export function expandRecallMemory(db, {
     sensitivity: memory.sensitivity,
     family_key: memory.family_key,
     content_hash: memory.content_hash,
+    updated_at: memory.updated_at,
     version: memory.version,
   };
 }
