@@ -7,3 +7,5 @@ imports/
 *.sqlite*
 *.log
 coverage/
+packages/sdk-typescript/dist/
+packages/sdk-typescript/LICENSE

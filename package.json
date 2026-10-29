@@ -50,7 +50,15 @@
     "memory:import": "node scripts/import-memory-package.js",
     "doctor": "node scripts/doctor.js",
     "example:host": "node examples/host/run.js",
-    "example:http": "node examples/http/run.js"
+    "example:http": "node examples/http/run.js",
+    "sdk:generate": "node scripts/generate-sdk-types.js",
+    "sdk:check": "node scripts/generate-sdk-types.js --check",
+    "sdk:build": "npm --prefix packages/sdk-typescript run build",
+    "sdk:test": "npm run sdk:check && npm run sdk:build && MOSS_VECTOR_ENV_FILE=/dev/null MOSS_JEV_ENV_FILE=/dev/null MOSS_JEV_API_KEY= npm --prefix packages/sdk-typescript test",
+    "example:sdk": "node examples/sdk/run.js"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
 }

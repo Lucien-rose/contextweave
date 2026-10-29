@@ -191,7 +191,9 @@ ContextWeave 不会自动读取宿主的完整聊天档案。宿主负责提交�
 应用接入可使用 [HTTP API v1](docs/HTTP_API_V1.md) 的 `ingest`、`recall`、`evolve`
 入口，以及受上下文策略约束的读取和投递回执。设置 `MOSS_RUNTIME_TOKEN` 后，
 可对运行中的服务执行 `npm run example:http`，完成合成数据端到端示例。
-TypeScript、Python SDK 将在接口契约验收后提供。
+[TypeScript SDK 预览版](packages/sdk-typescript/README.md) 提供类型提示、Runtime/Admin
+客户端、取消请求与统一错误。执行 `npm run sdk:build` 后，可用 `npm run example:sdk`
+对隔离服务运行端到端示例。当前尚未发布 npm 包；Python SDK 为后续阶段。
 
 详见 [API](docs/API.md)、[宿主接入](docs/HOST_INTEGRATION.md)、[Agent 接入指南](docs/AGENT_INTEGRATION.md) 与根据真实 Schema 生成的 [工具参考](docs/TOOLS.md)。配置覆盖后以实时 `tools/list` 为准。
 
