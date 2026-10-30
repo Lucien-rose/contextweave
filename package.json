@@ -58,7 +58,7 @@
     "example:sdk": "node examples/sdk/run.js",
     "python:generate": "node scripts/generate-python-sdk.js",
     "python:check": "node scripts/generate-python-sdk.js --check",
-    "python:test": "npm run python:check && python3 -m mypy --config-file packages/sdk-python/pyproject.toml packages/sdk-python/src/contextweave packages/sdk-python/tests/consumer.py examples/python/run.py && python3 -m unittest discover -s packages/sdk-python/tests -v"
+    "python:test": "npm run python:check && python3 -m mypy --config-file packages/sdk-python/pyproject.toml packages/sdk-python/src/contextweave_sdk packages/sdk-python/tests/consumer.py examples/python/run.py && python3 -m unittest discover -s packages/sdk-python/tests -v"
   },
   "license": "Apache-2.0",
   "devDependencies": {
