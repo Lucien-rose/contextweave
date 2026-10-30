@@ -1,8 +1,14 @@
 # ContextWeave Python SDK
 
-Typed synchronous and asynchronous clients for HTTP API v1. Requires Python 3.11+ and HTTPX. This is an unpublished preview; package name and version are provisional.
+Typed synchronous and asynchronous clients for ContextWeave HTTP API v1. Requires Python 3.11+ and HTTPX. The 0.1 series is an API preview.
 
-From the repository root, create a virtual environment and install the preview:
+Install the published package:
+
+```sh
+python -m pip install contextweave-sdk
+```
+
+To develop from the repository, create a virtual environment and install the source package:
 
 Repository tests require Node.js 24 and npm in addition to Python. On Ubuntu/Debian,
 install the matching virtual-environment package first if `python3 -m venv` reports
@@ -55,4 +61,4 @@ After installation, run the synthetic example against an isolated backend:
 MOSS_BASE_URL=http://127.0.0.1:2091 MOSS_RUNTIME_TOKEN=your-runtime-token python examples/python/run.py
 ```
 
-Each example run deliberately saves one synthetic record. Tests start a temporary backend and remove its database afterward; paid model routes are disabled. Build an sdist and wheel with `python -m build packages/sdk-python`. For testing in another project, install the wheel from `packages/sdk-python/dist/`. No PyPI publication workflow is included.
+Each example run deliberately saves one synthetic record. Tests start a temporary backend and remove its database afterward; paid model routes are disabled. Build an sdist and wheel with `python -m build packages/sdk-python`. For testing in another project, install the wheel from `packages/sdk-python/dist/`. Registry releases are built, tested and published through the repository's protected PyPI environment.
