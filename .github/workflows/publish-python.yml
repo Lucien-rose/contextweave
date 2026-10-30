@@ -1,0 +1,46 @@
+name: Publish Python SDK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: npm ci
+      - run: python -m pip install './packages/sdk-python[dev]' twine
+      - run: npm run python:test
+      - run: python -m build packages/sdk-python --outdir packages/sdk-python/dist
+      - run: python -m twine check packages/sdk-python/dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: contextweave-python-sdk
+          path: packages/sdk-python/dist/
+          if-no-files-found: error
+          retention-days: 3
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/contextweave-sdk
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: contextweave-python-sdk
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
