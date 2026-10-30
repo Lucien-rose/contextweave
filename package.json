@@ -55,7 +55,10 @@
     "sdk:check": "node scripts/generate-sdk-types.js --check",
     "sdk:build": "npm --prefix packages/sdk-typescript run build",
     "sdk:test": "npm run sdk:check && npm run sdk:build && MOSS_VECTOR_ENV_FILE=/dev/null MOSS_JEV_ENV_FILE=/dev/null MOSS_JEV_API_KEY= npm --prefix packages/sdk-typescript test",
-    "example:sdk": "node examples/sdk/run.js"
+    "example:sdk": "node examples/sdk/run.js",
+    "python:generate": "node scripts/generate-python-sdk.js",
+    "python:check": "node scripts/generate-python-sdk.js --check",
+    "python:test": "npm run python:check && python3 -m mypy --config-file packages/sdk-python/pyproject.toml packages/sdk-python/src/contextweave packages/sdk-python/tests/consumer.py examples/python/run.py && python3 -m unittest discover -s packages/sdk-python/tests -v"
   },
   "license": "Apache-2.0",
   "devDependencies": {
