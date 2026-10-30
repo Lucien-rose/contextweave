@@ -13,6 +13,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - run: npm run sdk:test
       - run: npm run architecture:check
       - run: npm run boundary:check
       - run: npm run demo
