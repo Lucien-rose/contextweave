@@ -1,6 +1,7 @@
-# Unreleased — HTTP API v1 and SDK previews
+# ContextWeave 1.4.0 — release candidate
 
-Changes since 1.3.0; this section does not announce a new tagged release.
+Changes since 1.3.0. Prepared for publication; creating the v1.4.0 tag and GitHub
+Release is a separate final step. See [release details](docs/RELEASE_1.4.0.md).
 
 - Versioned HTTP application API for ingest, recall, evolution, context-checked
   reads, bootstrap, delivery acknowledgements, change receipts and admin reviews.
@@ -17,8 +18,7 @@ Changes since 1.3.0; this section does not announce a new tagged release.
   hosted service. No automatic retries are performed.
 
 SDK versions remain provisional 0.1.0 previews available from source. Neither npm
-nor PyPI publication is enabled. The backend package remains at 1.3.0 until release
-preparation assigns the next version. Existing private deployments are not updated
+nor PyPI publication is enabled. The backend source version is 1.4.0. Existing private deployments are not updated
 automatically, and this batch adds no database migration.
 
 See [HTTP API v1](docs/HTTP_API_V1.md), [TypeScript SDK](packages/sdk-typescript/README.md),

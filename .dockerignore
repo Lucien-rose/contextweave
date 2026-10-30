@@ -12,3 +12,4 @@ __pycache__
 *.egg-info
 packages/sdk-python/build
 packages/sdk-python/dist
+release-assets

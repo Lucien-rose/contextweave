@@ -1,0 +1,45 @@
+name: Release Assets
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - package.json
+      - docs/RELEASE_1.4.0.md
+      - .github/workflows/release-assets.yml
+  pull_request:
+    paths:
+      - package.json
+      - docs/RELEASE_1.4.0.md
+      - .github/workflows/release-assets.yml
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: npm ci
+      - run: python -m pip install build
+      - name: Build downloadable previews
+        run: |
+          mkdir release-assets
+          npm run sdk:build
+          npm pack ./packages/sdk-typescript --pack-destination release-assets
+          python -m build packages/sdk-python --outdir release-assets
+          version=$(node -p "JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version")
+          git archive --format=tar.gz --prefix="contextweave-${version}/" HEAD -o "release-assets/contextweave-${version}-source.tar.gz"
+          cd release-assets
+          sha256sum *.tgz *.whl *.tar.gz > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: contextweave-release-assets
+          path: release-assets/
+          if-no-files-found: error

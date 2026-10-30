@@ -3,7 +3,7 @@
 **Long-term memory infrastructure for AI agents.**
 
 [![CI](https://github.com/Lucien-rose/contextweave/actions/workflows/ci.yml/badge.svg)](https://github.com/Lucien-rose/contextweave/actions/workflows/ci.yml)
-![Core](https://img.shields.io/badge/Core-1.3.0-234f46)
+![Core](https://img.shields.io/badge/Core-1.4.0-234f46)
 ![Node](https://img.shields.io/badge/Node-%E2%89%A524-339933?logo=node.js&logoColor=white)
 [![License](https://img.shields.io/badge/License-Apache--2.0-234f46)](LICENSE)
 
@@ -220,7 +220,10 @@ See [API](docs/API.md), [Host Integration](docs/HOST_INTEGRATION.md), [Agent Int
 
 This is an independently deployable public backend. It does not include personal memories, prefilled portraits, private frontend or application code, personal Skills, production credentials, deployment secrets or the original private repository history.
 
-See [Public Boundary](docs/public-boundary.md). Current Core version is **1.3.0**; the [1.3.0 release record](docs/RELEASE_1.3.0.md) documents its scope and validation. Earlier release records remain available in the repository history.
+See [Public Boundary](docs/public-boundary.md). This source tree targets **1.4.0**;
+the [1.4.0 release notes](docs/RELEASE_1.4.0.md) document its scope and validation.
+Tags and registry listings determine what has actually been published. Earlier
+release records remain available in the repository history.
 
 ## License and credits
 
