@@ -1,48 +1,51 @@
 # Publication handoff
 
-Target: Core **1.4.0**, with TypeScript/Python **0.1.0 previews**. The next release
-action is a GitHub Release; registry publication is a separate follow-up.
+Core **1.4.0** is published at
+https://github.com/Lucien-rose/contextweave/releases/tag/v1.4.0 with verified source,
+TypeScript and Python SDK artifacts. Registry publication is managed separately.
 
-## GitHub Release
+## Python SDK 0.1.0
 
-1. Confirm the `release/1.4.0` preparation PR is merged and the resulting main
-   commit has successful CI, Container and Release Assets checks. Use that exact
-   commit, even if main advances afterward.
-2. Download the `contextweave-release-assets` artifact from Release Assets for
-   that commit. Unzip it and verify the files against `SHA256SUMS`.
-3. In Releases → Draft a new release, create `v1.4.0` targeting the verified commit.
-   Title: `ContextWeave 1.4.0 — HTTP API v1 and SDK previews`.
-4. Use `docs/RELEASE_1.4.0.md` as the release body, omitting its temporary publication
-   status paragraph. Retain the explicit SDK-preview/registry-publication limits.
-   Attach the source archive, TypeScript tarball, Python wheel/sdist and SHA256SUMS.
-5. Publish the GitHub Release. Check its tag commit, body and downloadable assets.
-   npm/PyPI publication and production deployment are not triggered by this step.
+The Python distribution is `contextweave-sdk`; the import package is
+`contextweave`. The release workflow builds from the default branch, runs the
+generated-contract, type, integration and independent-wheel tests, checks both
+distribution archives, and publishes through PyPI Trusted Publishing. It stores no
+PyPI password or long-lived API token.
 
-Repository: https://github.com/Lucien-rose/contextweave
+Before the first run, create the GitHub environment and the pending PyPI publisher
+with these exact values:
 
-## Rebuilding assets locally
+| Field | Value |
+| --- | --- |
+| PyPI project name | `contextweave-sdk` |
+| GitHub owner | `Lucien-rose` |
+| Repository | `contextweave` |
+| Workflow | `publish-python.yml` |
+| Environment | `pypi` |
 
-Use a clean checkout of the verified commit with Node.js 24 and a Python virtual
-environment. Install repository dependencies and `./packages/sdk-python[dev]`.
-The commands in `.github/workflows/release-assets.yml` build exactly the same
-files. Do not include node_modules, databases, local configuration or git history
-in the source archive; `git archive` includes only tracked source.
+Then run **Publish Python SDK** from GitHub Actions. The workflow requires the
+`pypi` environment and requests OIDC only for the publish job. PyPI converts the
+pending publisher into the project's trusted publisher after the first successful
+upload.
 
-The SDK tarball installs with `npm install /path/to/contextweave-sdk-0.1.0.tgz`.
-The Python wheel installs with `python -m pip install /path/to/contextweave_sdk-0.1.0-py3-none-any.whl`.
-The TypeScript npm scope is still provisional in package metadata.
+Verify the public package from a clean Python 3.11+ environment:
 
-## npm / PyPI follow-up
+```sh
+python -m venv /tmp/contextweave-pypi-verify
+. /tmp/contextweave-pypi-verify/bin/activate
+python -m pip install --upgrade pip
+python -m pip install contextweave-sdk==0.1.0
+python -c "from contextweave import ContextWeave, AsyncContextWeave; print('OK')"
+```
 
-Before enabling registry publication, sign in to the intended npm and PyPI owner
-accounts. Confirm control of the npm scope and availability/ownership of the Python
-distribution name. Current candidates are `@contextweave/sdk` and `contextweave-sdk`;
-the checked-in names do not establish registry ownership or reserve them.
+A released version cannot be overwritten on PyPI. Future releases must increment
+the SDK version before running the workflow again.
 
-If names change, update metadata, examples and consumer tests together and rebuild
-both packages. Only then remove TypeScript's `private: true` and Python's
-`Private :: Do Not Upload`, set npm public access for a scoped package, and publish
-the verified artifacts using the registry's authenticated flow. Check fresh installs
-from each registry before changing the READMEs to registry-install instructions.
+## npm follow-up
 
-Do not paste account credentials or tokens into release notes, source files or chat.
+The TypeScript candidate remains `@contextweave/sdk`. Confirm ownership of the
+`@contextweave` npm scope before removing its publication guard. Configure a
+separate protected npm workflow after the account and scope are available.
+
+Do not paste account credentials, recovery codes or tokens into source files,
+release notes, workflow inputs or chat.
