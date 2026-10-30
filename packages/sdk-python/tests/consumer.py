@@ -12,6 +12,7 @@ def consume(moss: ContextWeave, input: IngestInput) -> None:
     memory = moss.read({"memory_id": "example", "query": "launch"})["data"]
     if memory["available"]:
         hash: str = memory["content_hash"]
+        content: str = memory["content"]
     else:
         memory["content"]  # type: ignore[typeddict-item]
     moss.recall({})  # type: ignore[typeddict-item]

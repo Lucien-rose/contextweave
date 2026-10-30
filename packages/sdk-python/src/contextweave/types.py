@@ -14,12 +14,15 @@ class ApiResponse(TypedDict, Generic[T]):
     meta: ResponseMeta
 
 
-class MemoryCard(TypedDict):
+class MemoryFields(TypedDict):
     id: str
     title: str
     content_hash: str
     family_key: str
     version: int
+
+
+class MemoryCard(MemoryFields):
     content: NotRequired[str]
     excerpt: NotRequired[str]
     recall_tier: NotRequired[str]
@@ -65,7 +68,8 @@ class PendingReview(TypedDict):
 WriteResult = ChangeReceipt | PendingReview
 
 
-class AvailableMemory(MemoryCard):
+class AvailableMemory(MemoryFields):
+    content: str
     memory_id: str
     available: Literal[True]
     updated_at: str

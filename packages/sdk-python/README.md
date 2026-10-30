@@ -4,6 +4,11 @@ Typed synchronous and asynchronous clients for HTTP API v1. Requires Python 3.11
 
 From the repository root, create a virtual environment and install the preview:
 
+Repository tests require Node.js 24 and npm in addition to Python. On Ubuntu/Debian,
+install the matching virtual-environment package first if `python3 -m venv` reports
+that `ensurepip` is unavailable. Ubuntu 24.04 with Python 3.12 uses
+`apt install python3.12-venv`; this is a system prerequisite, not an SDK dependency.
+
 ```sh
 python3 -m venv /tmp/contextweave-python-env
 . /tmp/contextweave-python-env/bin/activate
