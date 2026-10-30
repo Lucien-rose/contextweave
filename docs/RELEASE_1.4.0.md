@@ -1,7 +1,7 @@
 # ContextWeave 1.4.0 — HTTP API v1 and SDK previews
 
-Publication status: prepared release candidate. This document does not create a tag,
-publish a registry package, or upgrade any existing deployment.
+Publication status: GitHub release published at `v1.4.0`. Registry packages are
+published separately; existing deployments are not upgraded automatically.
 
 ## Application integration
 
@@ -45,8 +45,8 @@ Backend: Node.js 24+, or the documented Docker Compose workflow. SDK-only use:
 TypeScript requires Node.js 22+; Python requires 3.11+ and HTTPX. Ubuntu repository
 tests may need the matching `python3.12-venv` system package.
 
-SDKs remain source/download previews. npm/PyPI names are provisional and their
-publication guards remain in place. Downloadable packages can be installed locally.
+The SDKs remain 0.1 previews. The Python distribution is prepared for trusted PyPI
+publishing; the npm scope remains provisional. Downloadable packages can be installed locally.
 
 Back up SQLite and configuration, including credentials and the model encryption
 key, before upgrading an existing installation. JSON memory import is not a full
@@ -59,5 +59,5 @@ upgrade automatically when this release is published.
 SDK 连接部署者自行指定的后端，保留审核状态、上下文权限、版本校验与送达确认。
 TypeScript 支持 ESM/CommonJS；Python 提供同步、异步调用与类型提示。
 
-后端与两份 SDK 已完成合成数据、独立安装和 CI 验证。SDK 目前通过源码或下载包试用，
-不代表已上架 npm/PyPI。本次发布不会自动更新已有私人部署，也不包含新的数据库迁移。
+后端与两份 SDK 已完成合成数据、独立安装和 CI 验证。Python SDK 已准备可信 PyPI
+发布流程，npm 包仍待命名空间确认。本次发布不会自动更新已有私人部署，也不包含新的数据库迁移。
