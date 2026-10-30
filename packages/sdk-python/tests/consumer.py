@@ -1,5 +1,5 @@
-from contextweave import AsyncContextWeave, ContextWeave
-from contextweave.requests import IngestInput
+from contextweave_sdk import AsyncContextWeave, ContextWeave
+from contextweave_sdk.requests import IngestInput
 
 
 def consume(moss: ContextWeave, input: IngestInput) -> None:

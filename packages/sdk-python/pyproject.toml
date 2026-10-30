@@ -37,8 +37,8 @@ dev = ["build>=1.2,<2", "mypy>=1.15,<2"]
 where = ["src"]
 
 [tool.setuptools.package-data]
-contextweave = ["py.typed"]
+contextweave_sdk = ["py.typed"]
 
 [tool.mypy]
 strict = true
-files = ["src/contextweave", "tests/consumer.py"]
+files = ["src/contextweave_sdk", "tests/consumer.py"]

@@ -7,7 +7,7 @@ TypeScript and Python SDK artifacts. Registry publication is managed separately.
 ## Python SDK 0.1.0
 
 The Python distribution is `contextweave-sdk`; the import package is
-`contextweave`. The release workflow builds from the default branch, runs the
+`contextweave_sdk`. The release workflow builds from the default branch, runs the
 generated-contract, type, integration and independent-wheel tests, checks both
 distribution archives, and publishes through PyPI Trusted Publishing. It stores no
 PyPI password or long-lived API token.

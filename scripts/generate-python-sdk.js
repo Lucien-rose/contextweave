@@ -44,7 +44,7 @@ function surface(async, admin = false) {
 }
 const client = "# Generated from HTTP API v1. Run npm run python:generate.\nfrom ._transport import AsyncTransport, SyncTransport\nfrom .requests import " + operations.filter(op => op.input).map(op => `${nameOf(op.name)}Input`).join(", ") + "\nfrom .types import ApiResponse, " + [...new Set(Object.values(results))].join(", ") + "\n\n\n" + [surface(false), surface(false, true), surface(true), surface(true, true)].join("\n\n");
 for (const [name, output] of [["requests.py", requests], ["client.py", client]]) {
-  const file = new URL(`../packages/sdk-python/src/contextweave/${name}`, import.meta.url);
+  const file = new URL(`../packages/sdk-python/src/contextweave_sdk/${name}`, import.meta.url);
   if (process.argv.includes("--check")) {
     if (readFileSync(file, "utf8") !== output) throw new Error(`Python ${name} is stale; run npm run python:generate`);
   } else writeFileSync(file, output);

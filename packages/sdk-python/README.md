@@ -24,7 +24,7 @@ npm run python:test
 ```
 
 ```python
-from contextweave import ContextWeave
+from contextweave_sdk import ContextWeave
 
 with ContextWeave(base_url="http://127.0.0.1:2091", token="your-runtime-token") as moss:
     result = moss.recall({"query": "What is the launch color?"})
@@ -35,7 +35,7 @@ with ContextWeave(base_url="http://127.0.0.1:2091", token="your-runtime-token") 
 For asynchronous hosts:
 
 ```python
-from contextweave import AsyncContextWeave
+from contextweave_sdk import AsyncContextWeave
 
 async with AsyncContextWeave(base_url="http://127.0.0.1:2091", token="your-runtime-token") as moss:
     result = await moss.recall({"query": "What is the launch color?"})
@@ -45,7 +45,7 @@ Use the server root as `base_url`, without `/api/v1`; proxy mount paths such as 
 
 Runtime methods: `ingest`, `recall`, `read`, `evolve`, `bootstrap`, `acknowledge`, `change`, `schema`. `ContextWeaveAdmin` and `AsyncContextWeaveAdmin` additionally expose `reviews`; initialize them separately with an admin token. Use context managers to close pooled connections, or call `close()` / `await aclose()`.
 
-Input TypedDicts live in `contextweave.requests`; response types live in `contextweave.types`. Inputs and method paths are generated from the executable server schema. CI checks drift and validates consumer types. Static types provide editor guidance; the server enforces semantic validation. Additional response keys are preserved at runtime.
+Input TypedDicts live in `contextweave_sdk.requests`; response types live in `contextweave_sdk.types`. Inputs and method paths are generated from the executable server schema. CI checks drift and validates consumer types. Static types provide editor guidance; the server enforces semantic validation. Additional response keys are preserved at runtime.
 
 Writes need a unique `change_id`, `family_key`, title, content and source evidence. Check `data.status`: `review_required` is a successful decision with no canonical write. Context-gated reads return `available: False`. Evolution needs the hash and timestamp of the current target, obtained through `read`. The SDK never fabricates source evidence or user authorization.
 
