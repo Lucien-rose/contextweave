@@ -1,8 +1,8 @@
 import os
 from uuid import uuid4
 
-from contextweave import ContextWeave
-from contextweave.requests import IngestInput
+from contextweave_sdk import ContextWeave
+from contextweave_sdk.requests import IngestInput
 
 
 def run_example(base_url: str, token: str) -> str:

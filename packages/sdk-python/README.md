@@ -1,8 +1,14 @@
 # ContextWeave Python SDK
 
-Typed synchronous and asynchronous clients for HTTP API v1. Requires Python 3.11+ and HTTPX. This is an unpublished preview; package name and version are provisional.
+Typed synchronous and asynchronous clients for ContextWeave HTTP API v1. Requires Python 3.11+ and HTTPX. The 0.1 series is an API preview.
 
-From the repository root, create a virtual environment and install the preview:
+Install the published package:
+
+```sh
+python -m pip install contextweave-sdk
+```
+
+To develop from the repository, create a virtual environment and install the source package:
 
 Repository tests require Node.js 24 and npm in addition to Python. On Ubuntu/Debian,
 install the matching virtual-environment package first if `python3 -m venv` reports
@@ -18,7 +24,7 @@ npm run python:test
 ```
 
 ```python
-from contextweave import ContextWeave
+from contextweave_sdk import ContextWeave
 
 with ContextWeave(base_url="http://127.0.0.1:2091", token="your-runtime-token") as moss:
     result = moss.recall({"query": "What is the launch color?"})
@@ -29,7 +35,7 @@ with ContextWeave(base_url="http://127.0.0.1:2091", token="your-runtime-token") 
 For asynchronous hosts:
 
 ```python
-from contextweave import AsyncContextWeave
+from contextweave_sdk import AsyncContextWeave
 
 async with AsyncContextWeave(base_url="http://127.0.0.1:2091", token="your-runtime-token") as moss:
     result = await moss.recall({"query": "What is the launch color?"})
@@ -39,7 +45,7 @@ Use the server root as `base_url`, without `/api/v1`; proxy mount paths such as 
 
 Runtime methods: `ingest`, `recall`, `read`, `evolve`, `bootstrap`, `acknowledge`, `change`, `schema`. `ContextWeaveAdmin` and `AsyncContextWeaveAdmin` additionally expose `reviews`; initialize them separately with an admin token. Use context managers to close pooled connections, or call `close()` / `await aclose()`.
 
-Input TypedDicts live in `contextweave.requests`; response types live in `contextweave.types`. Inputs and method paths are generated from the executable server schema. CI checks drift and validates consumer types. Static types provide editor guidance; the server enforces semantic validation. Additional response keys are preserved at runtime.
+Input TypedDicts live in `contextweave_sdk.requests`; response types live in `contextweave_sdk.types`. Inputs and method paths are generated from the executable server schema. CI checks drift and validates consumer types. Static types provide editor guidance; the server enforces semantic validation. Additional response keys are preserved at runtime.
 
 Writes need a unique `change_id`, `family_key`, title, content and source evidence. Check `data.status`: `review_required` is a successful decision with no canonical write. Context-gated reads return `available: False`. Evolution needs the hash and timestamp of the current target, obtained through `read`. The SDK never fabricates source evidence or user authorization.
 
@@ -55,4 +61,4 @@ After installation, run the synthetic example against an isolated backend:
 MOSS_BASE_URL=http://127.0.0.1:2091 MOSS_RUNTIME_TOKEN=your-runtime-token python examples/python/run.py
 ```
 
-Each example run deliberately saves one synthetic record. Tests start a temporary backend and remove its database afterward; paid model routes are disabled. Build an sdist and wheel with `python -m build packages/sdk-python`. For testing in another project, install the wheel from `packages/sdk-python/dist/`. No PyPI publication workflow is included.
+Each example run deliberately saves one synthetic record. Tests start a temporary backend and remove its database afterward; paid model routes are disabled. Build an sdist and wheel with `python -m build packages/sdk-python`. For testing in another project, install the wheel from `packages/sdk-python/dist/`. Registry releases are built, tested and published through the repository's protected PyPI environment.

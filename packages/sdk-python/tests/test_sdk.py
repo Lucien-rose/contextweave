@@ -9,7 +9,7 @@ import unittest
 import zipfile
 
 import httpx
-from contextweave import AsyncContextWeave, ApiError, ContextWeave, ContextWeaveAdmin, TransportError
+from contextweave_sdk import AsyncContextWeave, ApiError, ContextWeave, ContextWeaveAdmin, TransportError
 
 ROOT = Path(__file__).resolve().parents[3]
 TOKEN = "synthetic-python-runtime-token"
@@ -131,10 +131,10 @@ class TransportTests(unittest.TestCase):
             subprocess.run([sys.executable, "-m", "build", "--outdir", directory, str(package)], check=True, capture_output=True)
             wheel = next(Path(directory).glob("*.whl"))
             with zipfile.ZipFile(wheel) as archive:
-                self.assertIn("contextweave/py.typed", archive.namelist())
-                self.assertTrue(all(name.startswith(("contextweave/", "contextweave_sdk-")) for name in archive.namelist()))
+                self.assertIn("contextweave_sdk/py.typed", archive.namelist())
+                self.assertTrue(all(name.startswith(("contextweave_sdk/", "contextweave_sdk-")) for name in archive.namelist()))
             target = str(Path(directory) / "installed")
             subprocess.run([sys.executable, "-m", "pip", "install", "--no-deps", "--target", target, str(wheel)], check=True, capture_output=True)
-            source = "import contextweave; from contextweave import ContextWeave, AsyncContextWeave; print(contextweave.__file__)"
+            source = "import contextweave_sdk; from contextweave_sdk import ContextWeave, AsyncContextWeave; print(contextweave_sdk.__file__)"
             result = subprocess.check_output([sys.executable, "-c", source], cwd=directory, env={**os.environ, "PYTHONPATH": target}, text=True)
             self.assertIn(target, result)
