@@ -35,7 +35,7 @@ python -m venv /tmp/contextweave-pypi-verify
 . /tmp/contextweave-pypi-verify/bin/activate
 python -m pip install --upgrade pip
 python -m pip install contextweave-sdk==0.1.0
-python -c "from contextweave import ContextWeave, AsyncContextWeave; print('OK')"
+python -c "from contextweave_sdk import ContextWeave, AsyncContextWeave; print('OK')"
 ```
 
 A released version cannot be overwritten on PyPI. Future releases must increment
