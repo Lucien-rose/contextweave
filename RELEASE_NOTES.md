@@ -1,3 +1,33 @@
+# Unreleased — HTTP API v1 and SDK previews
+
+Changes since 1.3.0; this section does not announce a new tagged release.
+
+- Versioned HTTP application API for ingest, recall, evolution, context-checked
+  reads, bootstrap, delivery acknowledgements, change receipts and admin reviews.
+- TypeScript SDK preview with generated request types, ESM/CommonJS exports,
+  timeout/cancellation and structured API/transport errors.
+- Python SDK preview with generated request types and method paths, synchronous
+  and asynchronous Runtime/Admin clients, typed responses and wheel/sdist packages.
+- Recall admission fixes preserve qualified T2 associations while requiring
+  grounded association paths and answer utility. Ordinary relevance uses 0.75;
+  association path fit retains 0.8. Successful no-utility judgments can suppress
+  direct identity material without removing the local fallback for model failure.
+- Both SDKs preserve review-required decisions and confirmed delivery semantics.
+  They connect to the backend selected by each deployer and do not select a shared
+  hosted service. No automatic retries are performed.
+
+SDK versions remain provisional 0.1.0 previews available from source. Neither npm
+nor PyPI publication is enabled. The backend package remains at 1.3.0 until release
+preparation assigns the next version. Existing private deployments are not updated
+automatically, and this batch adds no database migration.
+
+See [HTTP API v1](docs/HTTP_API_V1.md), [TypeScript SDK](packages/sdk-typescript/README.md),
+[Python SDK](packages/sdk-python/README.md) and [validation](RELEASE_VALIDATION.md).
+
+中文：本批次补齐版本化 HTTP 接口、TypeScript 与 Python 接入包，并收录召回门禁修复。
+两份 SDK 均连接使用者自己指定的后端，保留审核、权限和送达确认语义。
+当前为源码预览，尚未发布新的 GitHub Release 或 npm/PyPI 包。
+
 # ContextWeave 1.2.0
 
 Portable memory-package import and a complete bilingual onboarding guide.

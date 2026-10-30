@@ -1,3 +1,26 @@
+# Unreleased integration validation — 2026-10-30
+
+- Backend public suite: 55/55 synthetic integration tests passed.
+- TypeScript SDK: 6/6 tests passed, including a fresh standalone tarball install,
+  ESM/CommonJS consumers, confirmed delivery, domain states and transport failures.
+- Python SDK: 6/6 tests passed, including a wheel built from the sdist, independent
+  installation, sync/async HTTP parity, native cancellation and domain states.
+- Strict Python typing: 8 SDK/consumer/example files passed.
+- Architecture: 217 backend modules, zero detected import cycles. SDKs import no
+  backend runtime modules; backend imports are confined to repository test fixtures.
+- CI also runs Python 3.11 and 3.13. User-reported VPS acceptance completed both
+  SDK suites; Ubuntu Python 3.12 first required its matching venv system package.
+- Public boundary scan passed. All test records are synthetic; paid model routes
+  are disabled. Tests use disposable databases, not the private VPS database.
+
+Review scope: SDK transport boundaries, generated contracts, package contents,
+resource cleanup, error propagation and shared HTTP/MCP behavior. No new retrieval
+benchmark was run for this SDK batch. Existing benchmark results retain their
+original corpus/provider scope. Versions and publication remain release-preparation
+work; successful tests do not imply that npm/PyPI packages have been published.
+
+---
+
 # ContextWeave 1.2.0 — release validation
 
 Validated 2026-10-26 with GitHub Actions / Node.js 24 using synthetic data.

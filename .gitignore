@@ -9,3 +9,8 @@ imports/
 coverage/
 packages/sdk-typescript/dist/
 packages/sdk-typescript/LICENSE
+__pycache__/
+*.egg-info/
+.mypy_cache/
+packages/sdk-python/dist/
+packages/sdk-python/build/

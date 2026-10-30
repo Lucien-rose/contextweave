@@ -41,13 +41,14 @@ export class ContextWeave {
   protected async request<T>(path: string, input?: unknown, options: RequestOptions = {}): Promise<ApiResponse<T>> {
     const timeout = AbortSignal.timeout(options.timeoutMs ?? this.timeoutMs);
     const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
+    const body = input === undefined ? undefined : JSON.stringify(input);
     let response: Response;
     let payload: WireResponse<T>;
     try {
       response = await this.fetcher(new URL(`api/v1/${path}`, this.baseUrl), {
         method: input === undefined ? "GET" : "POST",
         headers: { Authorization: `Bearer ${this.token}`, ...(input === undefined ? {} : { "Content-Type": "application/json" }) },
-        body: input === undefined ? undefined : JSON.stringify(input),
+        body,
         signal, redirect: "error",
       });
       const text = await response.text();

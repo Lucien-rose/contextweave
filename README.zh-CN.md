@@ -193,7 +193,8 @@ ContextWeave 不会自动读取宿主的完整聊天档案。宿主负责提交�
 可对运行中的服务执行 `npm run example:http`，完成合成数据端到端示例。
 [TypeScript SDK 预览版](packages/sdk-typescript/README.md) 提供类型提示、Runtime/Admin
 客户端、取消请求与统一错误。执行 `npm run sdk:build` 后，可用 `npm run example:sdk`
-对隔离服务运行端到端示例。当前尚未发布 npm 包；Python SDK 为后续阶段。
+对隔离服务运行端到端示例。[Python SDK 预览版](packages/sdk-python/README.md)
+提供同一契约的同步和异步客户端。两个 SDK 均可从源码安装，尚未发布到包平台。
 
 详见 [API](docs/API.md)、[宿主接入](docs/HOST_INTEGRATION.md)、[Agent 接入指南](docs/AGENT_INTEGRATION.md) 与根据真实 Schema 生成的 [工具参考](docs/TOOLS.md)。配置覆盖后以实时 `tools/list` 为准。
 

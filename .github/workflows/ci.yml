@@ -17,3 +17,20 @@ jobs:
       - run: npm run architecture:check
       - run: npm run boundary:check
       - run: npm run demo
+  python-sdk:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: npm ci
+      - run: python -m pip install './packages/sdk-python[dev]'
+      - run: npm run python:test

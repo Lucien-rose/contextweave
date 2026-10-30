@@ -194,7 +194,8 @@ and run `npm run example:http` against a running backend for a synthetic end-to-
 The [TypeScript SDK preview](packages/sdk-typescript/README.md) provides typed inputs,
 Runtime/Admin clients, cancellation and structured errors. Run `npm run sdk:build`,
 then `npm run example:sdk` against an isolated backend. It is not published to npm yet;
-the Python SDK is next.
+the [Python SDK preview](packages/sdk-python/README.md) offers sync/async clients
+for the same contract. Both SDKs are available from source; neither is published yet.
 
 See [API](docs/API.md), [Host Integration](docs/HOST_INTEGRATION.md), [Agent Integration](docs/AGENT_INTEGRATION.md) and the schema-generated [Tools Reference](docs/TOOLS.md). Live `tools/list` is authoritative after configuration overrides.
 

@@ -90,6 +90,9 @@ test("transport preserves mounted paths and meta, supports CJS, and classifies f
   assert.equal(seen.url, "https://example.test/moss/api/v1/recall");
   assert.equal(seen.init.redirect, "error");
   assert.equal(seen.init.headers.Authorization, `Bearer ${runtimeToken}`);
+  const circular = { query: "Harbor" };
+  circular.self = circular;
+  await assert.rejects(moss.recall(circular), TypeError);
   for (const [fetcher, code] of [
     [async () => { throw new TypeError("offline"); }, "network"],
     [async () => new Response("not JSON", { status: 502 }), "invalid_response"],

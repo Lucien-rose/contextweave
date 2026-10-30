@@ -7,3 +7,8 @@ imports
 *.sqlite*
 *.log
 coverage
+__pycache__
+.mypy_cache
+*.egg-info
+packages/sdk-python/build
+packages/sdk-python/dist
