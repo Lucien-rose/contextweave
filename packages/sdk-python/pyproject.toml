@@ -9,8 +9,26 @@ description = "Typed sync and async clients for ContextWeave HTTP API v1"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Phina" }]
+keywords = ["ai", "agents", "memory", "contextweave"]
 dependencies = ["httpx>=0.28,<1"]
-classifiers = ["Development Status :: 3 - Alpha", "Typing :: Typed", "Private :: Do Not Upload"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/Lucien-rose/contextweave"
+Documentation = "https://github.com/Lucien-rose/contextweave/tree/main/packages/sdk-python"
+Repository = "https://github.com/Lucien-rose/contextweave"
+Issues = "https://github.com/Lucien-rose/contextweave/issues"
+Changelog = "https://github.com/Lucien-rose/contextweave/releases"
 
 [project.optional-dependencies]
 dev = ["build>=1.2,<2", "mypy>=1.15,<2"]
