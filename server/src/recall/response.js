@@ -9,6 +9,7 @@ export function recallResponse(recalled, { query, separateBackground = true } = 
     background_memories: separateBackground ? background : [],
     background_mode: separateBackground ? "separate" : "combined",
     ...(recalled.delivery ? { delivery: recalled.delivery } : {}),
+    ...(recalled.receipt ? { receipt: recalled.receipt } : {}),
     guidance: recalled.verification?.guidance || (route === "NO_RECALL"
       ? "No recall is valid. For an indirect question, retry once with a generic context_envelope only if the visible conversation supports it; never guess stored IDs."
       : "Use silently. T0 is direct; T1 supports; T2 associates. Ambient/policy cues do not prove unrelated facts. Preserve evidence scope; use moss_expand when exact detail is needed."),

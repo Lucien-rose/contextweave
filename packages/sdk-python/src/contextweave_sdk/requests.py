@@ -2,6 +2,10 @@
 from typing import Literal, NotRequired, TypedDict
 
 
+class ReceiptInput(TypedDict):
+    receipt_id: str
+
+
 class IngestInputAttributes(TypedDict):
     layer: NotRequired[Literal["core", "context", "archive"]]
     event_date: NotRequired[str | None]
@@ -250,6 +254,7 @@ class BootstrapInput(TypedDict):
 class DeliveredInput(TypedDict):
     receipt_id: str
     memory_ids: list[str]
+    memory_package_tokens: NotRequired[int]
 
 
 class ChangeInput(TypedDict):

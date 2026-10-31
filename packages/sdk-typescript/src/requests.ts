@@ -1,4 +1,7 @@
 // Generated from HTTP API v1. Run npm run sdk:generate.
+export type ReceiptInput = {
+    "receipt_id": string;
+};
 export type IngestInput = {
     "change_id": string;
     "operation"?: "create" | "append_episode";
@@ -219,6 +222,7 @@ export type BootstrapInput = {
 export type DeliveredInput = {
     "receipt_id": string;
     "memory_ids": Array<string>;
+    "memory_package_tokens"?: number;
 };
 export type ChangeInput = {
     "change_id": string;

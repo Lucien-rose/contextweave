@@ -1,3 +1,15 @@
+# Unreleased
+
+- Ordinary recall now creates an owner-readable Recall Receipt with the submitted
+  query, titled T0/T1/T2 references, omitted and privacy-blocked candidates,
+  retrieval routes, latency and package size. Receipt details remain outside MCP
+  results and require admin credentials over HTTP.
+- Existing delivery acknowledgements accept optional host-counted memory tokens.
+  Both SDKs expose the owner receipt reader. The existing receipt table gains one
+  nullable details column; legacy acknowledgement behavior is preserved.
+- Eden rendering, Memory caching and SSE synchronization remain host follow-up work.
+  See [receipt contract](docs/RECALL_RECEIPT.md).
+
 # ContextWeave 1.4.0
 
 Published as `v1.4.0`. See [release details](docs/RELEASE_1.4.0.md).

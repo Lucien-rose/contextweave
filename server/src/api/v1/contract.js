@@ -28,9 +28,11 @@ export const readSchema = z.object({
 export const deliverySchema = z.object({
   receipt_id: id.startsWith("delivery:"),
   memory_ids: z.array(id).min(1).max(64),
+  memory_package_tokens: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),
 }).strict();
 
 export const operations = Object.freeze([
+  { name: "receipt", method: "POST", path: "/recall/receipt", role: "admin", schema: z.object({ receipt_id: id.startsWith("delivery:") }).strict() },
   { name: "ingest", method: "POST", path: "/ingest", role: "runtime", schema: ingestSchema },
   { name: "recall", method: "POST", path: "/recall", role: "runtime", schema: recallRequestSchema },
   { name: "evolve", method: "POST", path: "/evolve", role: "runtime", schema: evolveSchema },

@@ -139,6 +139,7 @@ export function recallMemoriesWithTrace(repository, {
     const directDispositions = new Map(observed.filter(({ entry }) => entry.rawDirectEvidence && eligible.has(entry.memory.id))
       .map(({ entry }) => [entry.memory.id, directAnswerDisposition(entry, semanticDecisions.get(entry.memory.id))]));
     scored = applySemanticDecisions(observed, scored, semanticDecisions);
+    const retained = new Set(scored.map(entry => entry.memory.id));
     const chosen = new Map(scored.filter(entry => entry.semanticDecision).map(entry => [entry.memory.id, entry]));
     for (const candidate of traceCandidates) {
       const directDisposition = directDispositions.get(candidate.id);
@@ -150,6 +151,11 @@ export function recallMemoriesWithTrace(repository, {
         candidate.local_admission = candidate.admission; candidate.local_reason = candidate.reason;
         candidate.admission = "admit";
         candidate.reason = chosen.get(candidate.id).semanticBackground ? "jev-background" : "jev-supporting";
+      } else if (eligible.has(candidate.id) && !retained.has(candidate.id)) {
+        const decision = semanticDecisions.get(candidate.id);
+        candidate.admission = "suppress";
+        candidate.reason = !decision || decision.coverage === "deferred" ? "jev-unjudged"
+          : decision.relevance === "uncertain" || decision.context_fit === "uncertain" ? "jev-uncertain" : "jev-omitted";
       }
     }
   }

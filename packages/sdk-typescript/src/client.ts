@@ -1,5 +1,6 @@
 import { ApiError, TransportError } from "./errors.js";
-import type { IngestInput, RecallInput, EvolveInput, ReadInput, BootstrapInput, DeliveredInput, ChangeInput } from "./requests.js";
+import type { IngestInput, RecallInput, EvolveInput, ReadInput, BootstrapInput, DeliveredInput, ChangeInput, ReceiptInput } from "./requests.js";
+import type { RecallReceipt } from "./types.js";
 import type { ApiResponse, WriteResult, RecallResult, ReadResult, BootstrapResult, DeliveryResult, ChangeReceipt, ReviewsResult, SchemaResult } from "./types.js";
 
 export interface ClientOptions {
@@ -72,5 +73,6 @@ export class ContextWeave {
 }
 
 export class ContextWeaveAdmin extends ContextWeave {
+  receipt(input: ReceiptInput, options?: RequestOptions) { return this.request<RecallReceipt>("recall/receipt", input, options); }
   reviews(options?: RequestOptions) { return this.request<ReviewsResult>("admin/reviews", undefined, options); }
 }

@@ -33,6 +33,33 @@ class DeliveryReceipt(TypedDict):
     status: Literal["prepared"]
 
 
+class RecallReceiptRef(TypedDict):
+    receipt_id: str
+    status: Literal["prepared", "delivered", "empty"]
+
+
+class RecallReceiptItem(TypedDict):
+    memory_id: str
+    content_hash: str
+    title: str | None
+    tier: str | None
+    result: Literal["prepared", "delivered", "not_delivered", "filtered", "privacy_blocked"]
+    detail_level: NotRequired[str]
+    reason: NotRequired[str]
+
+
+class RecallReceipt(RecallReceiptRef):
+    schema_version: Literal[1]
+    created_at: str
+    items: list[RecallReceiptItem]
+    query: NotRequired[str]
+    latency_ms: NotRequired[float]
+    package_characters: NotRequired[int]
+    memory_package_tokens: NotRequired[int | None]
+    routes: NotRequired[dict[str, bool]]
+    counts: NotRequired[dict[str, int]]
+
+
 class RecallResult(TypedDict):
     query: str
     route: str
@@ -42,6 +69,7 @@ class RecallResult(TypedDict):
     guidance: str
     verification: NotRequired[dict[str, object] | None]
     delivery: NotRequired[DeliveryReceipt]
+    receipt: NotRequired[RecallReceiptRef]
 
 
 class ChangeReceipt(TypedDict):

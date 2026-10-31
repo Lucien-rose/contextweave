@@ -62,3 +62,11 @@ MOSS_BASE_URL=http://127.0.0.1:2091 MOSS_RUNTIME_TOKEN=your-runtime-token python
 ```
 
 Each example run deliberately saves one synthetic record. Tests start a temporary backend and remove its database afterward; paid model routes are disabled. Build an sdist and wheel with `python -m build packages/sdk-python`. For testing in another project, install the wheel from `packages/sdk-python/dist/`. Registry releases are built, tested and published through the repository's protected PyPI environment.
+
+## Recall receipts
+
+On upgraded backends ordinary recall returns `data["receipt"]`, including empty
+recalls. `ContextWeaveAdmin.receipt({"receipt_id": ...})` reads owner-only details;
+the async admin client supports the same operation. Keep receipt data outside
+model context. `acknowledge` accepts optional `memory_package_tokens` from the host.
+See [receipt contract](../../docs/RECALL_RECEIPT.md).

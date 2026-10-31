@@ -17,6 +17,18 @@ export interface MemoryCard {
 }
 
 export interface DeliveryReceipt { receipt_id: string; status: "prepared" }
+export interface RecallReceiptRef { receipt_id: string; status: "prepared" | "delivered" | "empty" }
+export interface RecallReceiptItem {
+  memory_id: string; content_hash: string; title: string | null; tier: string | null;
+  result: "prepared" | "delivered" | "not_delivered" | "filtered" | "privacy_blocked";
+  detail_level?: string; reason?: string;
+}
+export interface RecallReceipt extends RecallReceiptRef {
+  schema_version: 1; created_at: string; items: RecallReceiptItem[];
+  query?: string; latency_ms?: number; package_characters?: number; memory_package_tokens?: number | null;
+  routes?: { fts: boolean; vector: boolean; jev: boolean; fallback: boolean };
+  counts?: { filtered: number; privacy_blocked: number };
+}
 export interface RecallResult {
   query: string;
   route: string;
@@ -26,6 +38,7 @@ export interface RecallResult {
   guidance: string;
   verification?: Record<string, unknown> | null;
   delivery?: DeliveryReceipt;
+  receipt?: RecallReceiptRef;
 }
 
 export type ReadResult =

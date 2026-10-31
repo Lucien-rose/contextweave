@@ -141,6 +141,11 @@ models; it does not grant write authority.
 
 ## Recall, read and delivery
 
+Ordinary recall includes a `receipt` reference. Owner hosts can inspect titled
+results, blocked candidates and the submitted query through the admin-only
+`POST /api/v1/recall/receipt`. See [Recall Receipt](RECALL_RECEIPT.md) for fields,
+retention and host context-placement requirements.
+
 Start with `{"query":"What travel pace does the user prefer?"}`. Context defaults
 to `general` and intimacy to `off`. Advanced options such as budgets, context
 envelopes, version/time intent, Jev, vectors and repetition policy retain their

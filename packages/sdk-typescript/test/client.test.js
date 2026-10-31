@@ -68,7 +68,13 @@ test("SDK end-to-end example, recall parity, gated read and receipt semantics", 
   const sdk = await moss.recall(input);
   const http = await (await fetch(`${baseUrl}/api/v1/recall`, { method: "POST",
     headers: { Authorization: `Bearer ${runtimeToken}`, "Content-Type": "application/json" }, body: JSON.stringify(input) })).json();
-  assert.deepEqual(sdk.data, http.data);
+  const { receipt: sdkReceipt, ...sdkData } = sdk.data;
+  const { receipt: httpReceipt, ...httpData } = http.data;
+  assert.deepEqual(sdkData, httpData);
+  assert.equal(sdkReceipt.status, "empty");
+  assert.equal(httpReceipt.status, "empty");
+  const admin = new ContextWeaveAdmin({ baseUrl, token: adminToken });
+  assert.equal((await admin.receipt({ receipt_id: sdkReceipt.receipt_id })).data.query, input.query);
   assert.equal(sdk.data.route, "NO_RECALL");
   assert.equal((await moss.bootstrap()).data.schema_version, 3);
   writeMemory(db, { id: "sdk:sealed", title: "Private agreement", content: "Synthetic sealed text.",

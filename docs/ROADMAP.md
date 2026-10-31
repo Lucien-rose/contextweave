@@ -5,7 +5,7 @@ No release date is promised.
 
 | Area | Backend responsibility | Host responsibility |
 | --- | --- | --- |
-| Recall Ledger | Optional body-free route history and delivery outcomes | Session association and visualization |
+| Recall Receipt (backend delivered) | Body-free query, titled references, routes and delivery outcomes; see [contract](RECALL_RECEIPT.md) | Reply association, Memory cache and folded visualization; synchronization remains deferred |
 | Background repetition policy | Future background-specific cooldown policy | Stable surface identifiers and context placement |
 | Recall evaluation | Fixed synthetic relevance cases, ranking metrics and replay through the production pipeline | Optional useful/wrong/missed feedback |
 | Summary scheduling (optional) | Existing explicit backfill remains available; automatic scheduling is deferred because long T0 recall now opens relevant windows | Configure a summary model if desired |
