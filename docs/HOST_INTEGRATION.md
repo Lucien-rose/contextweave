@@ -135,3 +135,10 @@ See [vector migration and health inspection](VECTOR_AND_HEALTH.md) for the backe
 See [recall and navigation upgrade](RECALL_UPGRADE.md) for semantic/local routing,
 host-only status, confirmed surface cooldown, Atlas leads and reviewable Lineage
 partitions. These reuse the existing domain services and host delivery contract.
+
+## Recall receipt display
+
+Use the [Recall Receipt contract](RECALL_RECEIPT.md) to attach an owner-visible
+audit to each reply. Keep its reference and details out of model context. Admin
+credentials stay on the host backend. Frontend caching and change synchronization
+belong to the host integration.

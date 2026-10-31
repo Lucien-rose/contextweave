@@ -31,7 +31,7 @@ function type(schema, name) {
 }
 for (const operation of operations.filter(item => item.input)) type(operation.input, `${nameOf(operation.name)}Input`);
 const requests = "# Generated from HTTP API v1. Run npm run python:generate.\nfrom typing import Literal, NotRequired, TypedDict\n\n\n" + [...classes.values()].join("\n\n");
-const results = { ingest: "WriteResult", evolve: "WriteResult", recall: "RecallResult", read: "ReadResult", bootstrap: "BootstrapResult", delivered: "DeliveryResult", change: "ChangeReceipt", reviews: "ReviewsResult", schema: "SchemaResult" };
+const results = { ingest: "WriteResult", evolve: "WriteResult", recall: "RecallResult", read: "ReadResult", bootstrap: "BootstrapResult", delivered: "DeliveryResult", change: "ChangeReceipt", reviews: "ReviewsResult", schema: "SchemaResult", receipt: "RecallReceipt" };
 function surface(async, admin = false) {
   const prefix = async ? "Async" : "";
   const base = admin ? `${prefix}ContextWeave` : `${async ? "Async" : "Sync"}Transport`;

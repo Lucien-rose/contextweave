@@ -4,6 +4,7 @@ import { flushVectorDeletions } from "./evolution/vector-deletion.js";
 import { portraitHousekeeping } from "./portrait/lifecycle.js";
 import { prunePortraitRuntime } from "./portrait/status.js";
 import { startPortraitWorker } from "./portrait/worker.js";
+import { pruneRecallDeliveries } from "./recall/delivery.js";
 
 export function startMaintenance(db, { intervalMs = 3600000 } = {}) {
   let pending;
@@ -15,6 +16,7 @@ export function startMaintenance(db, { intervalMs = 3600000 } = {}) {
       portraitHousekeeping(db, { at: now });
       prunePortraitRuntime(db);
       evolutionHousekeeping(db, now);
+      pruneRecallDeliveries(db, { at: now, apply: true });
       await flushVectorDeletions(db);
     })().catch(error => console.error("ContextWeave maintenance failed", error))
       .finally(() => { pending = null; });

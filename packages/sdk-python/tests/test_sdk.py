@@ -76,7 +76,13 @@ class BackendTests(unittest.TestCase):
                 result = await moss.recall(input)
                 async with httpx.AsyncClient(trust_env=False) as http:
                     raw = await http.post(f"{self.base_url}/api/v1/recall", json=input, headers={"Authorization": f"Bearer {TOKEN}"})
-                self.assertEqual(result["data"], raw.json()["data"])
+                raw_data = raw.json()["data"]
+                receipt = result["data"].pop("receipt")
+                self.assertEqual(receipt["status"], "empty")
+                raw_data.pop("receipt")
+                self.assertEqual(result["data"], raw_data)
+                with ContextWeaveAdmin(base_url=self.base_url, token="synthetic-python-admin-token") as admin:
+                    self.assertEqual(admin.receipt({"receipt_id": receipt["receipt_id"]})["data"]["query"], input["query"])
                 self.assertEqual(result["data"]["route"], "NO_RECALL")
         asyncio.run(run())
 

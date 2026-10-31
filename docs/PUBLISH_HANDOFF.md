@@ -1,5 +1,21 @@
 # Publication handoff
 
+## Core 1.5.0 / SDKs 0.2.0
+
+PR #16 prepares Recall Receipts. See [release notes](RELEASE_1.5.0.md).
+Existing PyPI 0.1.0 does not have the receipt reader; 0.2.0 requires a separate publish.
+
+After approval: merge the verified PR, confirm main-branch CI and Release Assets,
+create GitHub release `v1.5.0` at that exact commit, and attach the source archive,
+TypeScript tarball, Python wheel/sdist and SHA256SUMS from that run. Then manually
+run Publish Python SDK against the same source revision for PyPI 0.2.0.
+Keep the npm publication guard enabled. Private deployment is a separate upgrade.
+
+Before a private upgrade, back up SQLite and configuration and adapt the changes
+to the private package. Receipt storage adds a nullable `details_json` column.
+Backend maintenance now clears completed receipts after 30 days and prepared
+receipts after 90 days; review this retention change before deploying.
+
 Core **1.4.0** is published at
 https://github.com/Lucien-rose/contextweave/releases/tag/v1.4.0 with verified source,
 TypeScript and Python SDK artifacts. Python SDK 0.1.0 is also published on

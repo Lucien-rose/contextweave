@@ -9,6 +9,7 @@ export const recallScopeSchema = z.object({
 
 export function ensureRecallCooldown(db) {
   ensureSqliteColumn(db, "recall_deliveries", "scope_json", "TEXT");
+  ensureSqliteColumn(db, "recall_deliveries", "details_json", "TEXT");
   db.exec(`CREATE TABLE IF NOT EXISTS recall_surface_deliveries (
     client TEXT NOT NULL, surface TEXT NOT NULL, memory_id TEXT NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
     content_hash TEXT NOT NULL, session TEXT, delivered_at TEXT NOT NULL,

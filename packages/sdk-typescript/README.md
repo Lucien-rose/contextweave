@@ -34,6 +34,12 @@ Writes require a unique `change_id`, `family_key`, title, content, and source ev
 
 For confirmed delivery, request `delivery_mode: "confirmed"`, inject the selected memories into model context, then call `acknowledge({ receipt_id, memory_ids })`. A receipt is optional when there are no memories. Reads and failed injection attempts must not trigger acknowledgement. Repeating the same acknowledgement is safe.
 
+On upgraded backends ordinary recall always returns `data.receipt`, including empty
+recalls. `ContextWeaveAdmin.receipt({ receipt_id })` reads the owner-only query,
+titles, tiers, filtering reasons, routes and timing. Keep this data outside model
+context. `acknowledge` accepts optional `memory_package_tokens` from the host.
+See [receipt contract](../../docs/RECALL_RECEIPT.md).
+
 Every method accepts a final `{ signal, timeoutMs }` option. The timeout covers both fetch and response-body reading. Server errors throw `ApiError` with `status`, `code`, `requestId`, and optional validation `issues`. Network, timeout, cancellation and malformed/version-mismatched responses throw `TransportError` with code `network`, `timeout`, `aborted`, or `invalid_response`.
 
 There are no automatic retries. A failed write can have reached the server; reuse its unchanged `change_id` when retrying an applied intent. Pending reviews are reconsiderable and are not immutable applied receipts. See [HTTP API v1](../../docs/HTTP_API_V1.md) for the full authority and retry contract.

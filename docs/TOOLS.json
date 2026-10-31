@@ -679,11 +679,21 @@
               "type": "object",
               "properties": {
                 "state_scope": {
+                  "description": "Time of the requested events or facts; historical does not imply a superseded memory revision.",
                   "type": "string",
                   "enum": [
                     "current",
                     "historical",
                     "current-and-history"
+                  ]
+                },
+                "version_scope": {
+                  "description": "Memory revision lifecycle, independent of event time. Use superseded only when the user requests a replaced version.",
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "superseded",
+                    "all"
                   ]
                 },
                 "as_of": {
@@ -1059,11 +1069,21 @@
               "type": "object",
               "properties": {
                 "state_scope": {
+                  "description": "Time of the requested events or facts; historical does not imply a superseded memory revision.",
                   "type": "string",
                   "enum": [
                     "current",
                     "historical",
                     "current-and-history"
+                  ]
+                },
+                "version_scope": {
+                  "description": "Memory revision lifecycle, independent of event time. Use superseded only when the user requests a replaced version.",
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "superseded",
+                    "all"
                   ]
                 },
                 "as_of": {
@@ -5332,6 +5352,11 @@
             "minLength": 1,
             "maxLength": 240
           }
+        },
+        "memory_package_tokens": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
         }
       },
       "required": [

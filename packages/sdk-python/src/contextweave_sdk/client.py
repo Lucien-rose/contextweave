@@ -1,7 +1,7 @@
 # Generated from HTTP API v1. Run npm run python:generate.
 from ._transport import AsyncTransport, SyncTransport
-from .requests import IngestInput, RecallInput, EvolveInput, ReadInput, BootstrapInput, DeliveredInput, ChangeInput
-from .types import ApiResponse, WriteResult, RecallResult, ReadResult, BootstrapResult, DeliveryResult, ChangeReceipt, ReviewsResult, SchemaResult
+from .requests import ReceiptInput, IngestInput, RecallInput, EvolveInput, ReadInput, BootstrapInput, DeliveredInput, ChangeInput
+from .types import ApiResponse, WriteResult, RecallResult, ReadResult, BootstrapResult, DeliveryResult, ChangeReceipt, ReviewsResult, SchemaResult, RecallReceipt
 
 
 class ContextWeave(SyncTransport):
@@ -31,6 +31,9 @@ class ContextWeave(SyncTransport):
 
 
 class ContextWeaveAdmin(ContextWeave):
+    def receipt(self, input: ReceiptInput, *, timeout: float | None = None) -> ApiResponse[RecallReceipt]:
+        return self._request("recall/receipt", input, timeout=timeout)
+
     def reviews(self, *, timeout: float | None = None) -> ApiResponse[ReviewsResult]:
         return self._request("admin/reviews", timeout=timeout)
 
@@ -62,5 +65,8 @@ class AsyncContextWeave(AsyncTransport):
 
 
 class AsyncContextWeaveAdmin(AsyncContextWeave):
+    async def receipt(self, input: ReceiptInput, *, timeout: float | None = None) -> ApiResponse[RecallReceipt]:
+        return await self._request("recall/receipt", input, timeout=timeout)
+
     async def reviews(self, *, timeout: float | None = None) -> ApiResponse[ReviewsResult]:
         return await self._request("admin/reviews", timeout=timeout)

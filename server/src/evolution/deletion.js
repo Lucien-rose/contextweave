@@ -5,6 +5,7 @@ import { deletionSchema, parseContract } from "./contract.js";
 import { flushVectorDeletions } from "./vector-deletion.js";
 import { purgeMemoryPortraitDerivatives } from "../portrait/deletion.js";
 import { redactFamilyHistory } from "../family/history.js";
+import { redactRecallReceiptTitles } from "../recall/receipt.js";
 
 export async function deleteMemory(db, input, options = {}) {
   const request = parseContract(deletionSchema, input);
@@ -36,6 +37,7 @@ function deleteCanonical(db, request) {
   db.prepare("DELETE FROM audit_log WHERE memory_id = ?").run(id);
   purgeMemoryPortraitDerivatives(db, id);
   redactFamilyHistory(db, id);
+  redactRecallReceiptTitles(db, id);
   // Old receipts can contain nested before/after bodies, including other records' snapshots.
   scrubSnapshots(db, id);
   db.prepare("DELETE FROM memories WHERE id = ?").run(id);

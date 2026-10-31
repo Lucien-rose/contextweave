@@ -664,11 +664,21 @@ Use this when a message may connect to prior shared memories, promises, agreemen
           "type": "object",
           "properties": {
             "state_scope": {
+              "description": "Time of the requested events or facts; historical does not imply a superseded memory revision.",
               "type": "string",
               "enum": [
                 "current",
                 "historical",
                 "current-and-history"
+              ]
+            },
+            "version_scope": {
+              "description": "Memory revision lifecycle, independent of event time. Use superseded only when the user requests a replaced version.",
+              "type": "string",
+              "enum": [
+                "active",
+                "superseded",
+                "all"
               ]
             },
             "as_of": {
@@ -1039,11 +1049,21 @@ Run a non-mutating, body-free recall diagnostic. Compare off, observe, and on mo
           "type": "object",
           "properties": {
             "state_scope": {
+              "description": "Time of the requested events or facts; historical does not imply a superseded memory revision.",
               "type": "string",
               "enum": [
                 "current",
                 "historical",
                 "current-and-history"
+              ]
+            },
+            "version_scope": {
+              "description": "Memory revision lifecycle, independent of event time. Use superseded only when the user requests a replaced version.",
+              "type": "string",
+              "enum": [
+                "active",
+                "superseded",
+                "all"
               ]
             },
             "as_of": {
@@ -5025,6 +5045,11 @@ Host receipt for confirmed-mode recall. Call only after successful model-context
         "minLength": 1,
         "maxLength": 240
       }
+    },
+    "memory_package_tokens": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
     }
   },
   "required": [

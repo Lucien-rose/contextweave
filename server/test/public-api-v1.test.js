@@ -115,10 +115,16 @@ test("v1 recall shares MCP defaults, separate background and confirmed delivery"
   const body = { query: "Harbor launch", vector_mode: "off", jev_mode: "on", delivery_mode: "confirmed" };
   const http = (await request("/api/v1/recall", { body })).payload;
   const mcp = await client.callTool({ name: "moss_recall", arguments: body });
-  const withoutReceipt = ({ delivery, ...data }) => data;
+  const withoutReceipt = ({ delivery, receipt, ...data }) => data;
   assert.deepEqual(withoutReceipt(http.data), withoutReceipt(mcp.structuredContent));
   assert.equal(http.data.memories[0].id, "example:cobalt");
   assert.equal(http.data.background_mode, "separate");
+  const receiptBody = { receipt_id: http.data.receipt.receipt_id };
+  assert.equal((await request("/api/v1/recall/receipt", { body: receiptBody })).status, 403);
+  const receipt = (await request("/api/v1/recall/receipt", { body: receiptBody, token: adminToken })).payload.data;
+  assert.equal(receipt.query, body.query);
+  assert.equal(receipt.items[0].title, "Harbor launch");
+  assert.equal(receipt.status, "prepared");
   assert.ok(http.meta.recall_status);
   assert.equal(http.data.host_status, undefined);
   assert.equal(getMemory(db, "example:cobalt").recall_count, 0);

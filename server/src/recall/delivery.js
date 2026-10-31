@@ -4,20 +4,25 @@ import { randomUUID } from "node:crypto";
 import { getMemory } from "../database.js";
 import { recallMemoriesWithTrace, progressiveRecall } from "./sqlite.js";
 import { buildHomecomingBundle, memoriesForDate } from "../retrieval.js";
+import { buildReceiptDetails } from "./receipt.js";
 
 // Keep legacy clients working. Confirmed delivery is an explicit host contract:
 // the host acknowledges only the items that reached the model's context.
 export function recallForDelivery(db, input = {}) {
+  const started = performance.now();
   const { deliveryMode = "immediate", ...recallInput } = scopedRecallInput(db, input);
   if (!["immediate", "confirmed"].includes(deliveryMode)) throw new TypeError("Invalid delivery mode");
   const recalled = recallMemoriesWithTrace(db, {
     ...recallInput,
     recordRecall: deliveryMode === "immediate",
   });
-  return attachDelivery(db, recalled, [...recalled.memories, ...(recalled.background_memories || [])], deliveryMode, recallInput.recallScope);
+  return attachDelivery(db, recalled, [...recalled.memories, ...(recalled.background_memories || [])], deliveryMode, recallInput.recallScope,
+    buildReceiptDetails(db, recalled, { query: input.query, latencyMs: performance.now() - started }));
 }
 
 export async function recallForDeliveryWithVector(db, input = {}) {
+  const started = performance.now();
+  let hostStatus;
   const { deliveryMode = "immediate", vectorMode = null, ...recallInput } = scopedRecallInput(db, input);
   if (!["immediate", "confirmed"].includes(deliveryMode)) throw new TypeError("Invalid delivery mode");
   const recalled = await progressiveRecall(db, {
@@ -25,8 +30,10 @@ export async function recallForDeliveryWithVector(db, input = {}) {
     vectorMode,
     recordRecall: deliveryMode === "immediate",
     syncIndex: true,
+    onRecallStatus(status) { hostStatus = status; input.onRecallStatus?.(status); },
   });
-  return attachDelivery(db, recalled, [...recalled.memories, ...(recalled.background_memories || [])], deliveryMode, recallInput.recallScope);
+  return attachDelivery(db, recalled, [...recalled.memories, ...(recalled.background_memories || [])], deliveryMode, recallInput.recallScope,
+    buildReceiptDetails(db, recalled, { query: input.query, hostStatus, latencyMs: performance.now() - started }));
 }
 
 export function bootstrapForDelivery(db, { deliveryMode = "immediate", ...input } = {}) {
@@ -48,19 +55,29 @@ function validateDeliveryMode(mode) {
   if (!["immediate", "confirmed"].includes(mode)) throw new TypeError("Invalid delivery mode");
 }
 
-function attachDelivery(db, payload, memories, deliveryMode, scope = null) {
-  if (deliveryMode === "immediate" || !memories.length) return payload;
+function attachDelivery(db, payload, memories, deliveryMode, scope = null, details = null) {
+  if (!details && (deliveryMode === "immediate" || !memories.length)) return payload;
   const id = `delivery:${randomUUID()}`;
   const selected = [...new Map(memories.map((memory) => [memory.id,
     { id: memory.id, hash: memory.content_hash, lane: payload.memories?.some(item => item.id === memory.id) ? "main" : "background" }])).values()];
-  db.prepare(`INSERT INTO recall_deliveries(id, selected_json, created_at, scope_json) VALUES (?, ?, ?, ?)`)
-    .run(id, JSON.stringify(selected), new Date().toISOString(), scope ? JSON.stringify(scope) : null);
-  const response = { ...payload, delivery: { receipt_id: id, status: "prepared" } };
+  const createdAt = new Date().toISOString();
+  const finalized = deliveryMode === "immediate" || !memories.length;
+  db.prepare(`INSERT INTO recall_deliveries(id, selected_json, created_at, scope_json, details_json, delivered_at, delivered_ids_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?)`)
+    .run(id, JSON.stringify(selected), createdAt, scope ? JSON.stringify(scope) : null,
+      details ? JSON.stringify(details) : null, finalized ? createdAt : null,
+      finalized ? JSON.stringify(selected.map(item => item.id).sort()) : null);
+  const receipt = { receipt_id: id, status: !memories.length ? "empty" : finalized ? "delivered" : "prepared" };
+  const response = { ...payload, ...(details ? { receipt } : {}),
+    ...(!finalized ? { delivery: { receipt_id: id, status: "prepared" } } : {}) };
   if (response.budgets) updateCharacterCount(response);
   return response;
 }
 
-export function acknowledgeRecallDelivery(db, { receiptId, memoryIds } = {}) {
+export function acknowledgeRecallDelivery(db, { receiptId, memoryIds, memoryPackageTokens } = {}) {
+  if (memoryPackageTokens != null && (!Number.isSafeInteger(memoryPackageTokens) || memoryPackageTokens < 0)) {
+    throw new TypeError("memory_package_tokens must be a non-negative integer");
+  }
   if (typeof receiptId !== "string" || !receiptId.startsWith("delivery:")) {
     throw new TypeError("Valid receipt_id is required");
   }
@@ -90,6 +107,11 @@ export function acknowledgeRecallDelivery(db, { receiptId, memoryIds } = {}) {
       return memory && memory.content_hash === selected.find((item) => item.id === id).hash;
     });
     const deliveredAt = new Date().toISOString();
+    if (memoryPackageTokens != null && receipt.details_json) {
+      const details = JSON.parse(receipt.details_json);
+      details.memory_package_tokens = memoryPackageTokens;
+      db.prepare("UPDATE recall_deliveries SET details_json = ? WHERE id = ?").run(JSON.stringify(details), receiptId);
+    }
     const mark = db.prepare(`UPDATE memories SET last_recalled_at = ?, recall_count = recall_count + 1 WHERE id = ?`);
     for (const id of unchanged) mark.run(deliveredAt, id);
     recordSurfaceDelivery(db, receipt.scope_json ? JSON.parse(receipt.scope_json) : null,
