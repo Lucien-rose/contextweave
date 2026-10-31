@@ -1,6 +1,6 @@
 # ContextWeave 1.5.0 — Recall Receipts
 
-Status: prepared candidate; not published. SDK source versions: TypeScript 0.2.0
+SDK source versions: TypeScript 0.2.0
 and Python 0.2.0. PyPI still serves 0.1.0 until the protected publish workflow runs.
 
 Ordinary recall now returns a durable receipt reference. The owner-only HTTP
@@ -44,4 +44,4 @@ Release Assets workflow and carry SHA256 checksums.
 由宿主在模型上下文之外读取。现有送达确认继续复用，两份 SDK 同步增加查询方法。
 
 更新前需备份数据库与配置。本次包含兼容性数据库迁移，并接通既有保留期清理。
-Eden 前端和同步留待后续接入；当前仍是候选版本，未发布、未部署。
+Eden 前端和同步留待后续接入；私人部署不会自动更新。

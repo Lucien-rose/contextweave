@@ -1,9 +1,9 @@
 # Publication handoff
 
-## Next candidate: Core 1.5.0 / SDKs 0.2.0
+## Core 1.5.0 / SDKs 0.2.0
 
 PR #16 prepares Recall Receipts. See [release notes](RELEASE_1.5.0.md).
-These versions are not published. Existing PyPI 0.1.0 does not have the receipt reader.
+Existing PyPI 0.1.0 does not have the receipt reader; 0.2.0 requires a separate publish.
 
 After approval: merge the verified PR, confirm main-branch CI and Release Assets,
 create GitHub release `v1.5.0` at that exact commit, and attach the source archive,

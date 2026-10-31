@@ -1,6 +1,6 @@
-# ContextWeave 1.5.0 candidate
+# ContextWeave 1.5.0
 
-Prepared, not published. SDK source versions are 0.2.0.
+SDK source versions are 0.2.0.
 See [release details](docs/RELEASE_1.5.0.md).
 
 - Ordinary recall now creates an owner-readable Recall Receipt with the submitted
