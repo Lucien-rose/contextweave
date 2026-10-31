@@ -1,7 +1,7 @@
 # ContextWeave 1.5.0 — Recall Receipts
 
-SDK source versions: TypeScript 0.2.0
-and Python 0.2.0. PyPI still serves 0.1.0 until the protected publish workflow runs.
+SDK source versions: TypeScript 0.2.0 and Python 0.2.0. Python 0.2.0 is
+[available on PyPI](https://pypi.org/project/contextweave-sdk/0.2.0/).
 
 Ordinary recall now returns a durable receipt reference. The owner-only HTTP
 reader shows the submitted query, selected T0/T1/T2 titles, filtered and

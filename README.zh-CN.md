@@ -194,11 +194,11 @@ ContextWeave 不会自动读取宿主的完整聊天档案。宿主负责提交�
 [TypeScript SDK 预览版](packages/sdk-typescript/README.md) 提供类型提示、Runtime/Admin
 客户端、取消请求与统一错误。执行 `npm run sdk:build` 后，可用 `npm run example:sdk`
 对隔离服务运行端到端示例；目前仍从源码使用，尚未发布到 npm。
-[Python SDK 0.1.0 预览版](packages/sdk-python/README.md) 提供同一契约的同步和异步客户端，
-现已发布到 [PyPI](https://pypi.org/project/contextweave-sdk/0.1.0/)：
+[Python SDK 0.2.0 预览版](packages/sdk-python/README.md) 提供同一契约的同步和异步客户端，
+现已发布到 [PyPI](https://pypi.org/project/contextweave-sdk/0.2.0/)：
 
 ```sh
-python -m pip install contextweave-sdk==0.1.0
+python -m pip install contextweave-sdk==0.2.0
 ```
 
 详见 [API](docs/API.md)、[宿主接入](docs/HOST_INTEGRATION.md)、[Agent 接入指南](docs/AGENT_INTEGRATION.md) 与根据真实 Schema 生成的 [工具参考](docs/TOOLS.md)。配置覆盖后以实时 `tools/list` 为准。
