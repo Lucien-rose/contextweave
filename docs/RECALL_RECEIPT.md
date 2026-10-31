@@ -54,7 +54,9 @@ Its Memory cache and synchronization are deferred. Viewing a receipt does not
 record a memory read, trigger retrieval, or invoke a model.
 
 Completed receipts expire after 30 days; prepared receipts after 90 days, through
-existing explicit maintenance. Titles and query text are private audit data.
+the existing hourly backend maintenance. Permanently deleting a memory clears its
+title from stored receipts; its reference remains for delivery bookkeeping. Titles
+and query text are private audit data.
 
 TypeScript: `ContextWeaveAdmin.receipt({ receipt_id })`.
 Python: `ContextWeaveAdmin.receipt({"receipt_id": ...})`, also available on

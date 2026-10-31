@@ -3,7 +3,7 @@
 **面向 AI Agent 的长期记忆基础设施。**
 
 [![CI](https://github.com/Lucien-rose/contextweave/actions/workflows/ci.yml/badge.svg)](https://github.com/Lucien-rose/contextweave/actions/workflows/ci.yml)
-![Core](https://img.shields.io/badge/Core-1.4.0-234f46)
+![Core](https://img.shields.io/badge/Core-1.5.0_candidate-234f46)
 ![Node](https://img.shields.io/badge/Node-%E2%89%A524-339933?logo=node.js&logoColor=white)
 [![License](https://img.shields.io/badge/License-Apache--2.0-234f46)](LICENSE)
 
@@ -224,8 +224,8 @@ python -m pip install contextweave-sdk==0.1.0
 
 这是可独立部署的公开后端发行版，不包含真实个人记忆、预填充画像、私有前端与应用代码、私人 Skill、生产凭证、部署密钥或原始私人仓库历史。
 
-详见 [开源边界](docs/public-boundary.md)。当前源码目标版本为 **1.4.0**；
-[1.4.0 发布说明](docs/RELEASE_1.4.0.md)包含范围与验证结果。
+详见 [开源边界](docs/public-boundary.md)。当前源码目标版本为 **1.5.0 候选版**；
+[1.5.0 发布说明](docs/RELEASE_1.5.0.md)包含范围与验证结果，尚未正式发布。
 实际发布状态以版本标签和包平台记录为准，旧版本记录继续保留。
 
 ## 许可证与署名

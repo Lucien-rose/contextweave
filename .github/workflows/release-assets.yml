@@ -5,12 +5,12 @@ on:
     branches: [main]
     paths:
       - package.json
-      - docs/RELEASE_1.4.0.md
+      - docs/RELEASE_*.md
       - .github/workflows/release-assets.yml
   pull_request:
     paths:
       - package.json
-      - docs/RELEASE_1.4.0.md
+      - docs/RELEASE_*.md
       - .github/workflows/release-assets.yml
 permissions:
   contents: read

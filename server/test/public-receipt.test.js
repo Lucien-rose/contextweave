@@ -4,6 +4,10 @@ import { openDatabase, writeMemory, getMemory } from "../src/database.js";
 import { recallForDelivery, acknowledgeRecallDelivery, pruneRecallDeliveries } from "../src/recall/delivery.js";
 import { readRecallReceipt } from "../src/recall/receipt.js";
 import { ensureRecallCooldown } from "../src/recall/cooldown.js";
+import { selectBackground } from "../src/recall/background.js";
+import { buildReceiptDetails } from "../src/recall/receipt.js";
+import { deleteMemory } from "../src/evolution/deletion.js";
+import { startMaintenance } from "../src/maintenance.js";
 
 function fixture(t) {
   const { db } = openDatabase(":memory:");
@@ -85,4 +89,27 @@ test("limited recall records discarded titles and the actual packing reason", t 
   assert.equal(omitted.length, 1);
   assert.equal(omitted[0].reason, "skipped_limit");
   assert.match(omitted[0].title, /Cobalt/);
+});
+
+test("receipt reports background packing omissions rather than admission reasons", t => {
+  const db = fixture(t);
+  const background = selectBackground([{ entry: { memory: getMemory(db, "north") },
+    presentation: { id: "north", title: "Cobalt north", content_hash: getMemory(db, "north").content_hash } }], { maxItems: 0 });
+  const details = buildReceiptDetails(db, { memories: [], trace: { candidates: [{ id: "north",
+    candidate_generated: true, reason: "non-intimate", ...background.decisions.get("north") }] } },
+  { query: "Cobalt", latencyMs: 1 });
+  assert.equal(details.items[0].reason, "background-budget");
+});
+
+test("permanent deletion clears receipt titles and maintenance removes expired receipts", async t => {
+  const db = fixture(t);
+  const recalled = recallForDelivery(db, { query: "Cobalt route", deliveryMode: "confirmed" });
+  const memory = getMemory(db, "north");
+  await deleteMemory(db, { memory_id: memory.id, expected_content_hash: memory.content_hash,
+    expected_updated_at: memory.updated_at, confirmation: true, user_instruction: "Delete the north memory permanently." });
+  assert.equal(readRecallReceipt(db, recalled.receipt.receipt_id).items.find(item => item.memory_id === memory.id).title, null);
+  db.prepare("UPDATE recall_deliveries SET created_at = ?").run("2020-01-01T00:00:00.000Z");
+  const stop = startMaintenance(db);
+  await stop();
+  assert.equal(readRecallReceipt(db, recalled.receipt.receipt_id), null);
 });

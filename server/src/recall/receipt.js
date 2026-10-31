@@ -22,7 +22,8 @@ export function buildReceiptDetails(db, recalled, { query, hostStatus, latencyMs
     if (!memory) continue;
     items.push({ memory_id: memory.id, content_hash: memory.content_hash, title: memory.title,
       tier: candidate.recall_tier || null, result,
-      reason: candidate.packing_decision?.startsWith("skipped") || candidate.packing_decision === "total-budget-or-duplicate"
+      reason: candidate.packing_decision?.startsWith("skipped")
+        || ["total-budget-or-duplicate", "background-budget"].includes(candidate.packing_decision)
         ? candidate.packing_decision : candidate.reason });
   }
   return { schema_version: 1, query, latency_ms: Math.round(latencyMs * 100) / 100,
@@ -31,6 +32,15 @@ export function buildReceiptDetails(db, recalled, { query, hostStatus, latencyMs
       vector: Boolean(trace.vector?.query_count), jev: ["applied", "partial", "observed"].includes(hostStatus?.jev_status),
       fallback: Boolean(hostStatus?.fallback_used || trace.vector?.degraded) },
     items, counts };
+}
+
+export function redactRecallReceiptTitles(db, memoryId) {
+  for (const row of db.prepare("SELECT id, details_json FROM recall_deliveries WHERE details_json IS NOT NULL").all()) {
+    const details = JSON.parse(row.details_json);
+    if (!details.items.some(item => item.memory_id === memoryId)) continue;
+    details.items = details.items.map(item => item.memory_id === memoryId ? { ...item, title: null } : item);
+    db.prepare("UPDATE recall_deliveries SET details_json = ? WHERE id = ?").run(JSON.stringify(details), row.id);
+  }
 }
 
 export function readRecallReceipt(db, receiptId) {
