@@ -2,7 +2,9 @@
 
 Core **1.4.0** is published at
 https://github.com/Lucien-rose/contextweave/releases/tag/v1.4.0 with verified source,
-TypeScript and Python SDK artifacts. Registry publication is managed separately.
+TypeScript and Python SDK artifacts. Python SDK 0.1.0 is also published on
+[PyPI](https://pypi.org/project/contextweave-sdk/0.1.0/); npm publication is
+managed separately.
 
 ## Python SDK 0.1.0
 
@@ -12,8 +14,9 @@ generated-contract, type, integration and independent-wheel tests, checks both
 distribution archives, and publishes through PyPI Trusted Publishing. It stores no
 PyPI password or long-lived API token.
 
-Before the first run, create the GitHub environment and the pending PyPI publisher
-with these exact values:
+The first trusted release completed successfully through the protected `pypi`
+environment and the [Publish Python SDK workflow](https://github.com/Lucien-rose/contextweave/actions/runs/41054333979).
+The trusted publisher remains configured with these values:
 
 | Field | Value |
 | --- | --- |
@@ -23,10 +26,8 @@ with these exact values:
 | Workflow | `publish-python.yml` |
 | Environment | `pypi` |
 
-Then run **Publish Python SDK** from GitHub Actions. The workflow requires the
-`pypi` environment and requests OIDC only for the publish job. PyPI converts the
-pending publisher into the project's trusted publisher after the first successful
-upload.
+Future releases use the same protected workflow. Its publish job requests short-lived
+OIDC credentials; the repository stores no PyPI password or long-lived API token.
 
 Verify the public package from a clean Python 3.11+ environment:
 
